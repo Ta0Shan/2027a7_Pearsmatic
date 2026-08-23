@@ -7,9 +7,7 @@ import java.util.List;
 
 import org.wpilib.framework.RobotBase; // RobotBase throws an error for some reason ill have to look into it
 import org.wpilib.math.geometry.Pose2d;
-import org.wpilib.math.geometry.Pose3d;
 import org.wpilib.math.geometry.Rotation2d;
-import org.wpilib.math.geometry.Rotation3d;
 import org.wpilib.math.geometry.Transform2d;
 import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.math.util.Units;
@@ -18,8 +16,6 @@ import com.ctre.phoenix6.CANBus;
 
 import first.robot.subsystems.endEffector.EEConstants.RollerStates;
 import first.robot.subsystems.endEffector.EEConstants.WristStates;
-import first.robot.subsystems.launcher.Launcher;
-import first.robot.subsystems.launcher.LauncherConstants.LauncherStates;
 import first.robot.subsystems.telescope.TelescopeConstants.TelescopeStates;
 
 public class Constants {
@@ -32,8 +28,8 @@ public class Constants {
 
     public static final Mode simMode = Mode.SIM;
 
-    // public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
-    public static final Mode currentMode = simMode;
+    public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+    // public static final Mode currentMode = simMode;
 
     public static final CANBus SUPERSTRUCTURE_CAN_BUS = CANBus.systemcore(4);
     public static final double LOOP_FREQ_HZ = 50;
@@ -114,8 +110,15 @@ public class Constants {
         // OVERALL CONSTANTS
         public static final double FIELD_LENGTH = Units.inchesToMeters(648);
         public static final double FIELD_WIDTH = Units.inchesToMeters(324);
-        public static final Transform2d LSHAFT_WALL_DISTANCE = new Transform2d(new Translation2d(Units.inchesToMeters(10), Rotation2d.kZero), Rotation2d.k180deg);
-        public static final Transform2d USHAFT_WALL_DISTANCE = new Transform2d(new Translation2d(Units.inchesToMeters(31.25), Rotation2d.kZero), Rotation2d.k180deg);
+
+        private static final double ROBOT_LENGTH_WITH_BUMPERS = Units.inchesToMeters(35.5);
+        public static final Transform2d LSHAFT_GOAL_DIST = 
+            new Transform2d(new Translation2d(Units.inchesToMeters(10 + 2) + (ROBOT_LENGTH_WITH_BUMPERS/2), Rotation2d.k180deg),
+                            Rotation2d.kZero);
+        public static final Transform2d USHAFT_GOAL_DIST =
+            new Transform2d(new Translation2d(Units.inchesToMeters(31.25 + 2) + (ROBOT_LENGTH_WITH_BUMPERS/2), Rotation2d.k180deg)
+                                            .minus(new Translation2d(Units.inchesToMeters(5.25), Rotation2d.kCCW_90deg)),
+                            Rotation2d.kZero);
         // they point 180 away from the original pose because the original poses point inward to reflect the robot's direction
         
         public static final double MINE_OUTER_WIDTH = Units.inchesToMeters(50.75);
@@ -144,7 +147,7 @@ public class Constants {
             public static final Pose2d[] UPPER_SHAFTS = new Pose2d[4];
             static {
                 for (int i = 0; i < UPPER_SHAFTS.length; i++) {
-                    Rotation2d angle = new Rotation2d(Units.degreesToRadians(90 * i + 45));
+                    Rotation2d angle = new Rotation2d(Units.degreesToRadians(90 * i + (45 + 22.5)));
                     UPPER_SHAFTS[i] = new Pose2d(CAVE_CENTER.plus(new Translation2d(Units.inchesToMeters(12.176912), angle)), angle.minus(Rotation2d.k180deg));
                 }
             }

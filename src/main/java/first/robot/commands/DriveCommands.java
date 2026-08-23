@@ -21,6 +21,7 @@ import org.wpilib.driverstation.internal.DriverStationBackend;
 import org.wpilib.driverstation.Alliance;
 import org.wpilib.system.Timer;
 import org.wpilib.units.measure.Angle;
+import org.littletonrobotics.junction.Logger;
 import org.wpilib.command3.Command;
 
 import first.robot.Constants;
@@ -183,6 +184,8 @@ public class DriveCommands {
 
             Pose2d goal = pose.get();
 
+            Logger.recordOutput("Align/Travel Trajectory", new Translation2d[] {drive.getPose().getTranslation(), goal.getTranslation()});
+
             // Create PID controller
             ProfiledPIDController angleController =
                 new ProfiledPIDController(
@@ -191,10 +194,10 @@ public class DriveCommands {
                     ANGLE_KD,
                     new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
             angleController.enableContinuousInput(-Math.PI, Math.PI);
-            angleController.setTolerance(Units.degreesToRadians(5.));
+            angleController.setTolerance(Units.degreesToRadians(1.));
 
             // Reset PID controller when command starts
-            angleController.reset(drivePose.get().getRotation().getRadians());
+            angleController.reset(drive.getRotation().getRadians());
 
             ProfiledPIDController driveController =
                 new ProfiledPIDController(
@@ -203,26 +206,44 @@ public class DriveCommands {
                     DRIVE_kD,
                     new TrapezoidProfile.Constraints(DRIVE_MAX_VELOCITY, DRIVE_MAX_ACCELERATION));
             
-            driveController.reset(goal.getTranslation().minus(drivePose.get().getTranslation()).getNorm()); // "current position"
+            Translation2d error = goal.minus(drive.getPose()).getTranslation();
+            Rotation2d direction = error.getAngle();
+
+            ChassisVelocities currentVelocity = drive.getChassisVelocities();
+            double velocityTowardsTarget = (currentVelocity.vx * direction.getCos()) + (currentVelocity.vy * direction.getSin());
+            
+            driveController.reset(error.getNorm(), velocityTowardsTarget); // "current position"
             // we set the position this way because the goal (pose) is thus (0, 0): that way, the drive pose IS the error
-            driveController.setTolerance(Units.inchesToMeters(5));
+            driveController.setTolerance(Units.inchesToMeters(1));
 
             while(!driveController.atGoal() || !angleController.atGoal()) {
-                double omega = 
+
+                error = goal.minus(drive.getPose()).getTranslation();
+                direction = error.getAngle().plus(Rotation2d.k180deg);
+                // flipped because the direction of the error vector is opposite the direction of the necessary robot velocity vector
+
+                double twist = 
                     angleController.calculate(
                         drive.getRotation().getRadians(),
                         goal.getRotation().getRadians());
                 
-                double throttle = 
+                double velocity = 
                     driveController.calculate(
-                        goal.minus(drivePose.get()).getTranslation().getNorm(),
-                        goal.getTranslation().getNorm());
+                        error.getNorm(), // negative because this is the magnitude
+                        0); // because the goal is being treated as (0, 0)
                 
-                Translation2d velocity = new Translation2d(
-                    throttle,
-                    goal.minus(drivePose.get()).getRotation());
+                Translation2d throttle = new Translation2d(
+                    velocity,
+                    direction);
 
-                drive.runVelocity(new ChassisVelocities(velocity.getX(), velocity.getY(), omega));
+                drive.runVelocity(new ChassisVelocities(throttle.getX(), throttle.getY(), twist));
+                
+                Logger.recordOutput("Align/Goal Pose", goal);
+                Logger.recordOutput("Align/Translation Error", error.getNorm());
+                Logger.recordOutput("Align/Rotation Error", goal.getRotation().minus(drive.getRotation()).getDegrees());
+                Logger.recordOutput("Align/Throttle", velocity);
+                Logger.recordOutput("Align/Direction", direction.getDegrees());
+                Logger.recordOutput("Align/Twist", twist);
 
                 co.yield();
             }
@@ -240,28 +261,7 @@ public class DriveCommands {
             
             Rotation2d targetRotation = targetPose.minus(currentPose).getAngle().minus(Rotation2d.k180deg);
             
-            
-            ProfiledPIDController angleController =
-                new ProfiledPIDController(
-                    ANGLE_KP,
-                    0.0,
-                    ANGLE_KD,
-                    new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
-            angleController.enableContinuousInput(-Math.PI, Math.PI);
-            angleController.setTolerance(Units.degreesToRadians(5.));
-
-            while(!angleController.atGoal()) {
-                double omega = angleController.calculate(
-                    drive.getRotation().getRadians(),
-                    targetRotation.getRadians()
-                );
-
-                ChassisVelocities velocity = new ChassisVelocities(0, 0, omega);
-
-                drive.runVelocity(velocity);
-
-                co.yield();
-            }
+            co.await(goToPose(() -> new Pose2d(drive.getPose().getTranslation(), targetRotation)));
         }).named("SHUTTLE ALIGN");
     }
 
@@ -274,7 +274,7 @@ public class DriveCommands {
                 isRed ?
                   isL1 ? RedFieldConstants.LOWER_SHAFTS : RedFieldConstants.UPPER_SHAFTS
                 : isL1 ? BlueFieldConstants.LOWER_SHAFTS : BlueFieldConstants.UPPER_SHAFTS
-            )).plus(isL1 ? FieldConstants.LSHAFT_WALL_DISTANCE : FieldConstants.USHAFT_WALL_DISTANCE)
+            )).plus(isL1 ? FieldConstants.LSHAFT_GOAL_DIST : FieldConstants.USHAFT_GOAL_DIST)
             ;
             co.await(goToPose(() -> closestPose));
         }).named("NEUTAL ALIGN");
@@ -296,7 +296,7 @@ public class DriveCommands {
             ;
 
             Pose2d closestPose = drive.getPose().nearest(Arrays.asList(validShafts))
-                .plus(isL1 ? FieldConstants.LSHAFT_WALL_DISTANCE : FieldConstants.USHAFT_WALL_DISTANCE);
+                .plus(isL1 ? FieldConstants.LSHAFT_GOAL_DIST : FieldConstants.USHAFT_GOAL_DIST);
             co.await(goToPose(() -> closestPose));
         }).named("");
     }

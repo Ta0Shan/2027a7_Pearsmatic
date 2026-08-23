@@ -286,8 +286,8 @@ public class Drive extends Mechanism {
   }
 
   /** Returns the measured chassis speeds of the robot. */
-  @AutoLogOutput(key = "SwerveChassisSpeeds/Measured")
-  private ChassisVelocities getChassisSpeeds() {
+  @AutoLogOutput(key = "SwerveChassisVelocities/Measured")
+  public ChassisVelocities getChassisVelocities() {
     return kinematics.toChassisVelocities(getModuleVelocities());
   }
 
