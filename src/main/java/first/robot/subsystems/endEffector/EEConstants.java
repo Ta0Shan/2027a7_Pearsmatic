@@ -17,11 +17,12 @@ public class EEConstants {
         STOWED(0),
         DEPLOYED(201),
         L1_FRONT(166),
-        L1_BACK(49),
+        L1_BACK(43),
         L2_FRONT(166),
-        L2_BACK(88),
-        CLASSIFIER_FRONT(177),
-        CLASSIFIER_BACK(55)
+        L2_BACK(59),
+        CLASSIFIER_FRONT(201),
+        CLASSIFIER_BACK(49),
+        TUNING(0)
         ;
 
         public final double angleDeg;
@@ -36,7 +37,8 @@ public class EEConstants {
         FWD(5),
         REV(-5),
         FAST_FWD(10),
-        FAST_REV(-10)
+        FAST_REV(-10),
+        TUNING(0)
         ;
 
         public final double voltage;

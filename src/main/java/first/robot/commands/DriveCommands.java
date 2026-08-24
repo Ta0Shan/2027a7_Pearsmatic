@@ -32,15 +32,18 @@ import first.robot.Constants.FieldConstants.BlueFieldConstants;
 import first.robot.Constants.FieldConstants.RedFieldConstants;
 import first.robot.subsystems.drive.Drive;
 
+import static org.wpilib.units.Units.Rotation;
 import static org.wpilib.units.Units.Seconds;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.time.temporal.IsoFields;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -57,7 +60,7 @@ public class DriveCommands {
 
     private static final double DRIVE_kP = 7.0;
     private static final double DRIVE_kD = 0.4;
-    private static final double DRIVE_MAX_VELOCITY = 3.0; // m/s
+    private static final double DRIVE_MAX_VELOCITY = 4.0; // m/s
     private static final double DRIVE_MAX_ACCELERATION = 10.0; // m/s/s
 
     // Characterization has been commented because sim is ideal and ideally everything works
@@ -258,47 +261,90 @@ public class DriveCommands {
                 DriverStationBackend.getAlliance().orElse(Alliance.RED) == Alliance.RED
                 ? RedFieldConstants.CLASSIFIER_AIM_TARGET
                 : BlueFieldConstants.CLASSIFIER_AIM_TARGET;
-            
-            Rotation2d targetRotation = targetPose.minus(currentPose).getAngle().minus(Rotation2d.k180deg);
-            
-            co.await(goToPose(() -> new Pose2d(drive.getPose().getTranslation(), targetRotation)));
-        }).named("SHUTTLE ALIGN");
+                
+                Rotation2d targetRotation = targetPose.minus(currentPose).getAngle().minus(Rotation2d.k180deg);
+                
+                co.await(goToPose(() -> new Pose2d(drive.getPose().getTranslation(), targetRotation)));
+            }).named("ALIGN SHUTTLE");
+        }
+        
+    public double getDistanceFromClassifier() {
+        Translation2d currentPose = drive.getPose().getTranslation();
+        Translation2d targetPose = 
+            DriverStationBackend.getAlliance().orElse(Alliance.RED) == Alliance.RED
+            ? RedFieldConstants.CLASSIFIER_AIM_TARGET
+            : BlueFieldConstants.CLASSIFIER_AIM_TARGET;
+
+        return targetPose.minus(currentPose).getNorm();
     }
 
-    public Command neutralAlign(Supplier<SuperstructureStates> state) {
+    public Command align(Supplier<SuperstructureStates> state, Supplier<CrystalColor> crystalColor) {
         return drive.run(co -> {
-            boolean isL1 = state.get() == SuperstructureStates.L1_BACK || state.get() == SuperstructureStates.L1_FRONT;
-            boolean isRed = DriverStationBackend.getAlliance().orElse(Alliance.RED) == Alliance.RED;
+            if (state.get() == SuperstructureStates.CLASSIFIER_BACK || state.get() == SuperstructureStates.CLASSIFIER_FRONT) {
+                co.await(classifierAlign(state));
+            } else {
+                boolean isL1 = state.get() == SuperstructureStates.L1_BACK || state.get() == SuperstructureStates.L1_FRONT;
+                boolean isRed = DriverStationBackend.getAlliance().orElse(Alliance.RED) == Alliance.RED;
+                boolean isFront = state.get() == SuperstructureStates.L1_FRONT || state.get() == SuperstructureStates.L2_FRONT;
+                // boolean isFront = isFront(() -> DriverStationBackend.getAlliance(), state);
 
-            Pose2d closestPose = drive.getPose().nearest(Arrays.asList(
-                isRed ?
-                  isL1 ? RedFieldConstants.LOWER_SHAFTS : RedFieldConstants.UPPER_SHAFTS
-                : isL1 ? BlueFieldConstants.LOWER_SHAFTS : BlueFieldConstants.UPPER_SHAFTS
-            )).plus(isL1 ? FieldConstants.LSHAFT_GOAL_DIST : FieldConstants.USHAFT_GOAL_DIST)
-            ;
-            co.await(goToPose(() -> closestPose));
-        }).named("NEUTAL ALIGN");
+                Pose2d[] goalList = isRed
+                    ? (isL1 ? RedFieldConstants.LOWER_SHAFT_FACES : RedFieldConstants.UPPER_SHAFT_VERTICES)
+                    : (isL1 ? BlueFieldConstants.LOWER_SHAFT_FACES : BlueFieldConstants.UPPER_SHAFT_VERTICES);
+
+                Pose2d[] validGoals = crystalColor.get() != CrystalColor.NONE ?
+                    FieldConstants.getValidGoal(isL1, goalList, crystalColor.get())
+                    : goalList
+                    ;
+
+                Pose2d targetPose = drive.getPose().nearest(Arrays.asList(validGoals))
+                    .plus(isFront ? FieldConstants.ALIGN_OFFSET_SHORT : FieldConstants.ALIGN_OFFSET_LONG)
+                    .plus(isFront ? new Transform2d() : new Transform2d(0, 0, Rotation2d.k180deg))
+                    ;
+                co.await(goToPose(() -> targetPose));
+            }
+        }).named("COLORED ALIGN " + (crystalColor.get() == CrystalColor.NONE ? "ANY" : crystalColor.get().name()));
     }
 
-    public Command coloredAlign(Supplier<SuperstructureStates> state, Supplier<CrystalColor> crystalColor) {
+    public Command align(Supplier<SuperstructureStates> state) {
         return drive.run(co -> {
-            boolean isL1 = state.get() == SuperstructureStates.L1_BACK || state.get() == SuperstructureStates.L1_FRONT;
+            if (state.get() == SuperstructureStates.CLASSIFIER_FRONT || state.get() == SuperstructureStates.CLASSIFIER_BACK) {
+                co.await(classifierAlign(state));
+            } else {
+                co.await(align(state, () -> CrystalColor.NONE));
+            }
+        }).named("NEUTRAL ALIGN");
+    }
+
+    public Command classifierAlign(Supplier<SuperstructureStates> state) {
+        return drive.run(co -> {
             boolean isRed = DriverStationBackend.getAlliance().orElse(Alliance.RED) == Alliance.RED;
+            boolean isFront = state.get() == SuperstructureStates.CLASSIFIER_FRONT;
+            // boolean isFront = isFront(() -> DriverStationBackend.getAlliance(), state);
 
-            Pose2d[] shaftList = isRed ?
-                  isL1 ? RedFieldConstants.LOWER_SHAFTS : RedFieldConstants.UPPER_SHAFTS
-                : isL1 ? BlueFieldConstants.LOWER_SHAFTS : BlueFieldConstants.UPPER_SHAFTS
+            Pose2d targetPose = (isRed ?
+                        RedFieldConstants.CLASSIFIER_CENTER
+                        : BlueFieldConstants.CLASSIFIER_CENTER)
+                        .plus(FieldConstants.ALIGN_OFFSET_SHORT)
+                        .plus(isFront ? new Transform2d() : new Transform2d(0, 0, Rotation2d.k180deg));
             ;
+            co.await(goToPose(() -> targetPose));
+        }).named("CLASSIFIER ALIGN");
+    }
 
-            Pose2d[] validShafts = crystalColor.get()!=CrystalColor.NONE ?
-                  FieldConstants.getValidShaft(isL1, shaftList, crystalColor.get())
-                : shaftList
-            ;
-
-            Pose2d closestPose = drive.getPose().nearest(Arrays.asList(validShafts))
-                .plus(isL1 ? FieldConstants.LSHAFT_GOAL_DIST : FieldConstants.USHAFT_GOAL_DIST);
-            co.await(goToPose(() -> closestPose));
-        }).named("");
+    public boolean isFront(Supplier<Optional<Alliance>> alliance, Supplier<SuperstructureStates> state) {
+        boolean isRed = alliance.get().orElse(Alliance.RED) == Alliance.RED;
+        boolean isClassifier = state.get() == SuperstructureStates.CLASSIFIER_FRONT || state.get() == SuperstructureStates.CLASSIFIER_BACK;
+        if (isRed) { // if isRed
+            if (isClassifier) {
+                return Math.abs(drive.getRotation().minus(RedFieldConstants.CLASSIFIER_CENTER.getTranslation().minus(drive.getPose().getTranslation()).getAngle()).getDegrees()) <= 90;
+            } // else isCave
+            return Math.abs(drive.getRotation().minus(RedFieldConstants.CAVE_CENTER.minus(drive.getPose().getTranslation()).getAngle()).getDegrees()) <= 90;
+        } // else isBlue
+        if (isClassifier) {
+            return Math.abs(drive.getRotation().minus(BlueFieldConstants.CLASSIFIER_CENTER.getTranslation().minus(drive.getPose().getTranslation()).getAngle()).getDegrees()) <= 90;
+        } // else isBlue && isCave
+        return Math.abs(drive.getRotation().minus(BlueFieldConstants.CAVE_CENTER.minus(drive.getPose().getTranslation()).getAngle()).getDegrees()) <= 90;
     }
 
     public Command driveCircle() {
@@ -318,6 +364,7 @@ public class DriveCommands {
                 linearVelocity = new Translation2d(0.5, direction);
                 co.yield();
             }
+            drive.runVelocity(new ChassisVelocities(0, 0, 0));
         }).named("DRIVE CIRCLE");
     }
 
@@ -325,6 +372,7 @@ public class DriveCommands {
         return drive.run(co -> {
             drive.runVelocity(new ChassisVelocities(0, 0, 1));
             co.wait(Seconds.of(time));
+            drive.runVelocity(new ChassisVelocities(0, 0, 0));
         }).named("SPIN " + time + "s");
     }
 

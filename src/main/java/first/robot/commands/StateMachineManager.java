@@ -10,10 +10,13 @@ import org.littletonrobotics.junction.Logger;
 import org.wpilib.command3.Command;
 import org.wpilib.command3.StateMachine;
 import org.wpilib.command3.StateMachine.State;
-
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.internal.DriverStationBackend;
 import org.wpilib.command3.Trigger;
 
 import first.robot.Constants.SuperstructureStates;
+import first.robot.Constants.FieldConstants.BlueFieldConstants;
+import first.robot.Constants.FieldConstants.RedFieldConstants;
 import first.robot.subsystems.drive.Drive;
 import first.robot.subsystems.endEffector.EE;
 import first.robot.subsystems.launcher.Launcher;
@@ -75,7 +78,7 @@ public class StateMachineManager {
         primaryScoreTrigger = primaryScore;
         secondaryScoreTrigger = secondaryScore;
 
-        isFront = new Trigger(() -> true); // TODO: pos
+        isFront = new Trigger(() -> drivetrain.isFront(() -> DriverStationBackend.getAlliance(), () -> superstructure.getSuperstructureState()));
     }
 
     public StateMachine teleop() {
@@ -96,9 +99,9 @@ public class StateMachineManager {
             State IDLING = stateMachine.addState(superstructure.hold());
 
             // alignment states / in-betweens
-            State SHUTTLE = stateMachine.addState(Command.parallel(superstructure.shuttle(), drivetrain.shuttleAlign()).named("SHUTTLE")); // TODO: pose when akit and drive works
-            State COLORED = stateMachine.addState(superstructure.coloredAlign()); // TODO: ditto ^^^
-            State NEUTRAL = stateMachine.addState(drivetrain.neutralAlign(() -> superstructure.getSuperstructureState())); // TODO: ditto ^^^
+            State SHUTTLE_ALIGN = stateMachine.addState(Command.parallel(superstructure.shuttle(drivetrain::getDistanceFromClassifier), drivetrain.shuttleAlign()).named("SHUTTLE"));
+            State COLORED_ALIGN = stateMachine.addState(drivetrain.align(superstructure::getSuperstructureState, superstructure::getCrystalColor));
+            State NEUTRAL_ALIGN = stateMachine.addState(drivetrain.align(superstructure::getSuperstructureState));
 
             // scoring states / finals
             State SCORE = stateMachine.addState(superstructure.score());
@@ -129,30 +132,30 @@ public class StateMachineManager {
 
             // no matter the direction or scoring state, pressing scoreTrigger will align
             stateMachine.switchFromAny(L1_FRONT, L1_BACK, L2_FRONT, L2_BACK, CLASSIFIER_FRONT, CLASSIFIER_BACK, IDLING)
-                        .to(COLORED).when(primaryScoreTrigger.risingEdge());
+                        .to(COLORED_ALIGN).when(primaryScoreTrigger.risingEdge());
             // using risingEdge() trigger to make sure it's pressed, not held from a previous state
 
             stateMachine.switchFromAny(L1_FRONT, L1_BACK, L2_FRONT, L2_BACK, CLASSIFIER_FRONT, CLASSIFIER_BACK, IDLING)
-                        .to(NEUTRAL).when(secondaryScoreTrigger.risingEdge());
+                        .to(NEUTRAL_ALIGN).when(secondaryScoreTrigger.risingEdge());
             // NEUTRAL is mapped to secondaryScore because COLORED earns more points, would change if driver shows preference to one config or the other
             
             // if the driver second guesses while aligning, letting go of the score trigger will enter a IDLING state
             // IDLING maintains current setpoints so driver can continue or pivot if they want to
-            COLORED.switchTo(IDLING).when(primaryScoreTrigger.negate());
-            NEUTRAL.switchTo(IDLING).when(secondaryScoreTrigger.negate());
+            COLORED_ALIGN.switchTo(IDLING).when(primaryScoreTrigger.negate());
+            NEUTRAL_ALIGN.switchTo(IDLING).when(secondaryScoreTrigger.negate());
             // ideally the driver shouldn't second guess but it's always nice to have yk
             
             // once the robot is aligned, switch from alignment state to scoring state
-            stateMachine.switchFromAny(COLORED, NEUTRAL).to(SCORE).whenComplete();
+            stateMachine.switchFromAny(COLORED_ALIGN, NEUTRAL_ALIGN).to(SCORE).whenComplete();
 
             // SHUTTLE is the "scoring" mech for the launcher
-            HOME.switchTo(SHUTTLE).when(primaryScoreTrigger.risingEdge());
+            HOME.switchTo(SHUTTLE_ALIGN).when(primaryScoreTrigger.risingEdge());
 
             // if the driver second guesses while about to shoot, letting go of the score trigger will go back to HOME
-            SHUTTLE.switchTo(HOME).when(primaryScoreTrigger.negate());
+            SHUTTLE_ALIGN.switchTo(HOME).when(primaryScoreTrigger.negate());
             
             // once the robot is aligned, switch from alignment state to scoring state
-            SHUTTLE.switchTo(SCORE).whenComplete();
+            SHUTTLE_ALIGN.switchTo(SCORE).whenComplete();
 
             // scoring state will always return to HOME after it's done
             SCORE.switchTo(HOME).whenComplete();
@@ -205,7 +208,7 @@ public class StateMachineManager {
         ).withAutomaticName());
         State LAUNCHER = functional.addState(Command.sequence(
             superstructure.instantApplyState(SuperstructureStates.LAUNCHER),
-            superstructure.shuttle(),
+            superstructure.shuttle(() -> 5.0),
             superstructure.pause(1)
         ).withAutomaticName());
         State CLIMB_SEQUENCE = functional.addState(Command.sequence(
@@ -227,6 +230,10 @@ public class StateMachineManager {
         CLIMB_SEQUENCE.exitStateMachine().whenComplete();
 
         return functional;
+    }
+
+    public Command tuning() {
+        return superstructure.instantApplyState(SuperstructureStates.TUNING);
     }
 
     public void logData() {

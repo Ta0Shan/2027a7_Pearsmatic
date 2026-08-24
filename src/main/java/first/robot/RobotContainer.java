@@ -17,6 +17,7 @@ import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.smartdashboard.SendableChooser;
 import org.wpilib.smartdashboard.SmartDashboard;
 
+import first.robot.Constants.CrystalColor;
 import first.robot.Constants.Mode;
 import first.robot.Constants.SuperstructureStates;
 import first.robot.commands.SuperstructureCommands;
@@ -49,7 +50,7 @@ public class RobotContainer {
 
   public final CommandNiDsXboxController driver;
   public final CommandNiDsXboxController operator;
-  private Trigger[] boundTriggers;
+  private ArrayList<Trigger> boundTriggers;
 
   private final SendableChooser<Command> autoChooser;
 
@@ -68,7 +69,7 @@ public class RobotContainer {
   public RobotContainer() {
     driver = new CommandNiDsXboxController(0);
     operator = new CommandNiDsXboxController(1);
-    boundTriggers = new Trigger[0];
+    boundTriggers = new ArrayList<Trigger>();
 
     autoChooser = new SendableChooser<>();
 
@@ -149,53 +150,52 @@ public class RobotContainer {
     SmartDashboard.putData("Autonomous Command", autoChooser);
   }
 
-  public void teleopBindings() {
-    // all direct robot controls are bound in the state machine already
-    driver.start().onTrue(Command.requiring(drive).executing(co -> {
-      drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d()));
-    }).named("RESET HEADING"));
-
-    Trigger operatorLeftYUp = new Trigger(() -> operator.getLeftY() < -0.9);
-    operatorLeftYUp.whileTrue(telescope.adjustAngleDeg(10 / Constants.LOOP_FREQ_HZ));
-    Trigger operatorLeftYDown = new Trigger(() -> operator.getLeftY() > 0.9);
-    operatorLeftYDown.whileTrue(telescope.adjustAngleDeg(-10 / Constants.LOOP_FREQ_HZ));
-    Trigger operatorRightYUp = new Trigger(() -> operator.getRightY() < -0.9);
-    operatorRightYUp.whileTrue(telescope.adjustExtensionIn(1.5 / Constants.LOOP_FREQ_HZ));
-    Trigger operatorRightYDown = new Trigger(() -> operator.getRightY() > 0.9);
-    operatorRightYDown.whileTrue(telescope.adjustExtensionIn(-1.5 / Constants.LOOP_FREQ_HZ));
-
-    operator.povUp().whileTrue(endEffector.adjustAngleDeg(10 / Constants.LOOP_FREQ_HZ));
-    operator.povDown().whileTrue(endEffector.adjustAngleDeg(-10 / Constants.LOOP_FREQ_HZ));
-    operator.povRight().whileTrue(endEffector.adjustVoltage(0.5 / Constants.LOOP_FREQ_HZ));
-    operator.povLeft().whileTrue(endEffector.adjustVoltage(-0.5 / Constants.LOOP_FREQ_HZ));
-
-    operator.rightBumper().whileTrue(launcher.adjustRPS(1 / Constants.LOOP_FREQ_HZ));
-    operator.leftBumper().whileTrue(launcher.adjustRPS(-1 / Constants.LOOP_FREQ_HZ));
-
-    boundTriggers = new Trigger[] {
-      driver.start(),
-      operatorLeftYUp,
-      operatorLeftYDown,
-      operatorRightYUp,
-      operatorRightYDown,
-      operator.povUp(),
-      operator.povDown(),
-      operator.povRight(),
-      operator.povLeft(),
-      operator.rightBumper(),
-      operator.leftBumper()
-    };
+  private void bind(Trigger trigger) {
+    boundTriggers.add(trigger);
   }
 
-  public void utilBindings() {
-    
+  public void enableAdjustmentBindings() {
+    // all direct robot controls are bound in the state machine already
+    bind(driver.start().onTrue(Command.requiring(drive).executing(co -> {
+      drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d()));
+    }).named("RESET HEADING")));
+
+    Trigger operatorLeftYUp = new Trigger(() -> operator.getLeftY() < -0.9);
+    bind(operatorLeftYUp.whileTrue(telescope.adjustAngleDeg(10 / Constants.LOOP_FREQ_HZ)));
+    Trigger operatorLeftYDown = new Trigger(() -> operator.getLeftY() > 0.9);
+    bind(operatorLeftYDown.whileTrue(telescope.adjustAngleDeg(-10 / Constants.LOOP_FREQ_HZ)));
+    Trigger operatorRightYUp = new Trigger(() -> operator.getRightY() < -0.9);
+    bind(operatorRightYUp.whileTrue(telescope.adjustExtensionIn(1.5 / Constants.LOOP_FREQ_HZ)));
+    Trigger operatorRightYDown = new Trigger(() -> operator.getRightY() > 0.9);
+    bind(operatorRightYDown.whileTrue(telescope.adjustExtensionIn(-1.5 / Constants.LOOP_FREQ_HZ)));
+
+    bind(operator.povUp().whileTrue(endEffector.adjustAngleDeg(10 / Constants.LOOP_FREQ_HZ)));
+    bind(operator.povDown().whileTrue(endEffector.adjustAngleDeg(-10 / Constants.LOOP_FREQ_HZ)));
+    bind(operator.povRight().whileTrue(endEffector.adjustVoltage(0.5 / Constants.LOOP_FREQ_HZ)));
+    bind(operator.povLeft().whileTrue(endEffector.adjustVoltage(-0.5 / Constants.LOOP_FREQ_HZ)));
+
+    bind(operator.rightBumper().whileTrue(launcher.adjustRPS(1 / Constants.LOOP_FREQ_HZ)));
+    bind(operator.leftBumper().whileTrue(launcher.adjustRPS(-1 / Constants.LOOP_FREQ_HZ)));
+  }
+
+  public void enableTuningBindings() {
+    bind(operator.start().onTrue(SMManager.functional()));
+    bind(operator.back().onTrue(SMManager.tuning()));
+    bind(driver.back().onTrue(SMManager.teleop()));
+  }
+
+  public void enableColorChangeBindings() {
+    bind(operator.a().onTrue(endEffector.setCrystalColor(CrystalColor.ORANGE)));
+    bind(operator.b().onTrue(endEffector.setCrystalColor(CrystalColor.GREEN)));
+    bind(operator.x().onTrue(endEffector.setCrystalColor(CrystalColor.YELLOW)));
+    bind(operator.y().onTrue(endEffector.setCrystalColor(CrystalColor.PURPLE)));
   }
 
   public void unbindAll() {
     for (Trigger trigger : boundTriggers) {
       trigger.unbind();
     }
-    boundTriggers = new Trigger[0];
+    boundTriggers = new ArrayList<Trigger>();
   }
 
   public Command getAutonomousCommand() {

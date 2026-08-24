@@ -35,7 +35,7 @@ public abstract class EEIOTalonFX implements EEIO {
         inputs.wristData = wrist.getData();
         inputs.rollerData = roller.getData();
 
-        inputs.colorReading = getColorReading();
+        // inputs.colorReading = getColorReading();
     }
 
     public void setWristAngleDeg(double angleDeg) {

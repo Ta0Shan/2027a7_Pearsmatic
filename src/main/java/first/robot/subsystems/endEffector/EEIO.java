@@ -14,7 +14,7 @@ public interface EEIO {
         public MotorData wristData;
         public MotorData rollerData;
 
-        public CrystalColor colorReading;
+        public CrystalColor colorReading = CrystalColor.NONE;
     }
 
     public default void updateInputs(EEIOInputs inputs) {}

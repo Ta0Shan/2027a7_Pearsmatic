@@ -61,6 +61,5 @@ public class EEIOSim extends EEIOTalonFX {
         rollerPosition += rollerPhysicsSim.getAngularVelocity() * Constants.LOOP_PERIOD_SEC * EEConstants.ROLLER_REDUCTION;
         rollerSimState.setRawRotorPosition(Units.radiansToRotations(rollerPosition));
         rollerSimState.setRotorVelocity(Units.radiansToRotations(rollerPhysicsSim.getAngularVelocity()) * EEConstants.ROLLER_REDUCTION);
-
     }
 }

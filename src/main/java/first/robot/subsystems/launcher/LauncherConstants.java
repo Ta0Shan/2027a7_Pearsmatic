@@ -14,7 +14,8 @@ public class LauncherConstants {
     public static enum LauncherStates {
         OFF,
         SELF_DIRECTING,
-        MANUAL
+        MANUAL,
+        TUNING
         ;
     }
 

@@ -17,6 +17,7 @@ import org.wpilib.math.util.Units;
 import first.robot.subsystems.telescope.TelescopeConstants.ArmConstants;
 import first.robot.subsystems.telescope.TelescopeConstants.PivotConstants;
 import first.robot.subsystems.telescope.TelescopeConstants.TelescopeStates;
+import first.robot.util.LoggedTunableNumber;
 
 public class Telescope extends Mechanism {
     private final TelescopeIO io;
@@ -30,10 +31,12 @@ public class Telescope extends Mechanism {
     @AutoLogOutput(key="Mechanisms/Telescope/Pivot/Raw Setpoint") private double rawAngle = 0.0;
     @AutoLogOutput(key="Mechanisms/Telescope/Pivot/Adjust") private double angleAdjust = 0.0;
     @AutoLogOutput(key="Mechanisms/Telescope/Pivot/True Setpoint") private double trueAngle = 0.0;
+    private final LoggedTunableNumber tunableAngle = new LoggedTunableNumber("Telescope/Pivot/Angle Setpoint Deg", 0.0);
     
     @AutoLogOutput(key="Mechanisms/Telescope/Arm/Raw Setpoint") private double rawExtension = 0.0;
     @AutoLogOutput(key="Mechanisms/Telescope/Arm/Adjust") private double extensionAdjust = 0.0;
     @AutoLogOutput(key="Mechanisms/Telescope/Arm/True Setpoint") private double trueExtension = 0.0;
+    private final LoggedTunableNumber tunableExtension = new LoggedTunableNumber("Telescope/Arm/Extension Setpoint In", 0.0);
 
     /** Creates a new Telescope. */
     public Telescope(TelescopeIO io) {
@@ -54,31 +57,51 @@ public class Telescope extends Mechanism {
 
     public Command applyState(TelescopeStates state) {
         return run(co -> {
-            Debouncer setpointDebouncer = new Debouncer(0.2, DebounceType.kFalling);
             this.state = state;
             if (isClimbing && state != TelescopeStates.CLUMB) {
-                io.shiftDogs(state == TelescopeStates.CLIMB_RAISED);
-                isClimbing = false;
-                co.wait(Seconds.of(0.3));
-            } // if the driver switches from CLIMB back to HOME it un-engages the dog shifter to make sure extension still works properly
-                rawAngle = state.pivotAngleDeg;
-                rawExtension = state.armExtensionInches;
-                    trueAngle = rawAngle + angleAdjust;
-                    trueExtension = rawExtension + extensionAdjust;
-            io.setPivotAngleDeg(trueAngle);
-            io.setArmExtensionIn(state==TelescopeStates.CLUMB, trueExtension);
-            while(setpointDebouncer.calculate(
-                    Math.abs((state.pivotAngleDeg - Units.rotationsToDegrees(inputs.pivotAbsEncoderPosition))) > 0.5
-                    || Math.abs(getArmSetpoint(state) - getArmExtensionInches()) > 0.05)
-                ) {
-                // functions as a timer, cmd gives up control when it's close to its setpoint (within 0.5° and 0.05");
-                co.yield();
+                co.await(shiftDogs(false));
+            } // if the driver switches away from climbing it un-engages the dog shifter to make sure extension still works properly
+            // normal logic, will complete naturally
+            if (state != TelescopeStates.TUNING) {
+                Debouncer setpointDebouncer = new Debouncer(0.2, DebounceType.kFalling);
+                    rawAngle = state.pivotAngleDeg;
+                    rawExtension = state.armExtensionInches;
+                        trueAngle = Math.clamp(rawAngle + angleAdjust, PivotConstants.MIN_ANGLE_DEG, PivotConstants.MAX_ANGLE_DEG);
+                        trueExtension = Math.clamp(rawExtension + extensionAdjust, Units.metersToInches(ArmConstants.MIN_EXTENSION_METERS), Units.metersToInches(ArmConstants.MAX_EXTENSION_METERS));
+                io.setPivotAngleDeg(trueAngle);
+                io.setArmExtensionIn(state==TelescopeStates.CLUMB, trueExtension);
+                while(setpointDebouncer.calculate(
+                        Math.abs((state.pivotAngleDeg - Units.rotationsToDegrees(inputs.pivotAbsEncoderPosition))) > 0.5
+                        || Math.abs(getArmSetpoint(state) - getArmExtensionInches()) > 0.05)
+                    ) {
+                    // functions as a timer, cmd gives up control when it's close to its setpoint (within 0.5° and 0.05");
+                    co.yield();
+                }
+                if (state == TelescopeStates.CLIMB_RAISED) {
+                    co.await(shiftDogs(true));
+                } // engages the dog shifter if the climb sequence is initiated
             }
-            if (state == TelescopeStates.CLIMB_RAISED) {
-                io.shiftDogs(state == TelescopeStates.CLIMB_RAISED);
-                isClimbing = true;
-            } // engages the dog shifter
+            // tuning logic, will never complete naturally
+            else {
+                while(true) {
+                    if(tunableAngle.hasChanged(tunableAngle.hashCode())) rawAngle = tunableAngle.get();
+                    if(tunableExtension.hasChanged(tunableExtension.hashCode())) rawExtension = tunableExtension.get();
+                    trueAngle = Math.clamp(rawAngle + angleAdjust, PivotConstants.MIN_ANGLE_DEG, PivotConstants.MAX_ANGLE_DEG);
+                        trueExtension = Math.clamp(rawExtension + extensionAdjust, Units.metersToInches(ArmConstants.MIN_EXTENSION_METERS), Units.metersToInches(ArmConstants.MAX_EXTENSION_METERS));
+                    io.setPivotAngleDeg(trueAngle);
+                    io.setArmExtensionIn(isClimbing, trueExtension);
+                    co.yield();
+                }
+            }
         }).named("TELE " + state.name());
+    }
+
+    public Command shiftDogs(boolean isClimbing) {
+        return run(co -> {
+            this.isClimbing = isClimbing;
+            io.shiftDogs(isClimbing);
+            co.wait(Seconds.of(1.0));
+        }).named("SWITCH TO " + (isClimbing ? "CLIMB" : "EXTENSION"));
     }
 
     public Command adjustAngleDeg(double by) {

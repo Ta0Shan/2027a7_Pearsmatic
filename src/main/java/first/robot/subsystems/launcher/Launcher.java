@@ -8,6 +8,7 @@ import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
 
 import first.robot.subsystems.launcher.LauncherConstants.LauncherStates;
+import first.robot.util.LoggedTunableNumber;
 
 public class Launcher extends Mechanism {
     private final LauncherIO io;
@@ -18,6 +19,7 @@ public class Launcher extends Mechanism {
     @AutoLogOutput(key="Mechanisms/Launcher/Raw Target") private double rawMeanTarget = 0.0;
     @AutoLogOutput(key="Mechanisms/Launcher/Adjust") private double adjust = 0.0;
     @AutoLogOutput(key="Mechanisms/Launcher/True RPS Target") private double meanRPSTarget = 0.0;
+    private final LoggedTunableNumber tunableRPS = new LoggedTunableNumber("Launcher/RPS Setpoint", 0.0);
 
     @AutoLogOutput(key="Mechanisms/Launcher/Error/Minimum Percent") private double minimumErrorPercent = 0.0;
 
@@ -50,18 +52,18 @@ public class Launcher extends Mechanism {
         // Logger.recordOutput("Mechanisms/Launcher/Error/Minimum Percent", minimumErrorPercent);
     }
 
-    public Command setLauncherRPS(double RPS) {
-        if (state == LauncherStates.OFF) {return Command.noRequirements(co -> {}).named("LAUNCHER IS OFF");}
+    public Command setLauncherRPS(double RPS) { // should NOT be called when in TUNING state
         return run(co -> {
-            rawMeanTarget = RPS;
-            meanRPSTarget = rawMeanTarget + adjust;
-            meanRPSTarget = (Math.abs(meanRPSTarget) < LauncherConstants.FLYWHEEL_MAX_SPEED_RPS ? meanRPSTarget : LauncherConstants.FLYWHEEL_MAX_SPEED_RPS);
-            io.setLauncherRPS(meanRPSTarget);
-            minimumErrorPercent = Math.abs(meanRPSTarget != 0 ? (meanRPSTarget - getMeanRPS()) / meanRPSTarget : 0) * 100;
-            while(minimumErrorPercent > 1) {
-                // functions as a timer, cmd gives up control when it's close to its setpoint
-                if ((meanRPSTarget - getMeanRPS()) / meanRPSTarget < minimumErrorPercent) {minimumErrorPercent = Math.abs((meanRPSTarget - getMeanRPS()) / meanRPSTarget) * 100;}
-                co.yield();
+            if (state != LauncherStates.OFF) {
+                rawMeanTarget = RPS;
+                meanRPSTarget = Math.clamp(rawMeanTarget + adjust, -LauncherConstants.FLYWHEEL_MAX_SPEED_RPS, LauncherConstants.FLYWHEEL_MAX_SPEED_RPS);
+                io.setLauncherRPS(meanRPSTarget);
+                minimumErrorPercent = Math.abs(meanRPSTarget != 0 ? (meanRPSTarget - getMeanRPS()) / meanRPSTarget : 0) * 100;
+                while(minimumErrorPercent > 1) {
+                    // functions as a timer, cmd gives up control when it's close to its setpoint
+                    if ((meanRPSTarget - getMeanRPS()) / meanRPSTarget < minimumErrorPercent) {minimumErrorPercent = Math.abs((meanRPSTarget - getMeanRPS()) / meanRPSTarget) * 100;}
+                    co.yield();
+                }
             }
         }).named("LAUNCHER RPS " + (Math.abs(RPS+adjust) < LauncherConstants.FLYWHEEL_MAX_SPEED_RPS ? RPS+adjust : LauncherConstants.FLYWHEEL_MAX_SPEED_RPS));
     }
@@ -74,7 +76,13 @@ public class Launcher extends Mechanism {
                 meanRPSTarget = 0.0;
                 io.setLauncherRPS(meanRPSTarget);
             }
-        }).named("APPLY STATE " + state);
+            if(state == LauncherStates.TUNING) {
+                co.fork(setScoringState(state));
+                if (tunableRPS.hasChanged(tunableRPS.hashCode())) rawMeanTarget = tunableRPS.get();
+                meanRPSTarget = Math.clamp(rawMeanTarget + adjust, -LauncherConstants.FLYWHEEL_MAX_SPEED_RPS, LauncherConstants.FLYWHEEL_MAX_SPEED_RPS);
+                io.setLauncherRPS(meanRPSTarget);
+            }
+        }).named("LAUNCHER " + state);
     }
 
     public Command setScoringState(LauncherStates state) {
