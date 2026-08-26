@@ -3,22 +3,17 @@ package first.robot.subsystems;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
-import org.littletonrobotics.junction.mechanism.LoggedMechanismObject2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 import org.wpilib.math.geometry.Rotation3d;
 import org.wpilib.math.geometry.Transform3d;
 import org.wpilib.math.geometry.Translation3d;
 import org.wpilib.math.util.Units;
-import org.wpilib.smartdashboard.SmartDashboard;
 import org.wpilib.util.Color;
 import org.wpilib.util.Color8Bit;
 
 import first.robot.Constants;
 import first.robot.subsystems.endEffector.EEConstants;
-import first.robot.subsystems.endEffector.EE;
-import first.robot.subsystems.launcher.Launcher;
 import first.robot.subsystems.launcher.LauncherConstants;
-import first.robot.subsystems.telescope.Telescope;
 import first.robot.subsystems.telescope.TelescopeConstants.ArmConstants;
 
 public class MechVisualizer {

@@ -11,18 +11,15 @@ import java.util.function.Supplier;
 import org.wpilib.command3.Command;
 import org.wpilib.math.filter.Debouncer;
 import org.wpilib.math.filter.Debouncer.DebounceType;
-import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.interpolation.InterpolatingDoubleTreeMap;
 
 import first.robot.Constants.CrystalColor;
 import first.robot.Constants.SuperstructureStates;
 import first.robot.subsystems.endEffector.EE;
 import first.robot.subsystems.endEffector.EEConstants.RollerStates;
-import first.robot.subsystems.endEffector.EEConstants.WristStates;
 import first.robot.subsystems.launcher.Launcher;
 import first.robot.subsystems.launcher.LauncherConstants.LauncherStates;
 import first.robot.subsystems.telescope.Telescope;
-import first.robot.subsystems.telescope.TelescopeConstants.TelescopeStates;
 import first.robot.util.LoggedTunableNumber;
 
 /** Add your docs here. */
@@ -59,7 +56,7 @@ public class SuperstructureCommands {
     
     public Command instantApplyState(SuperstructureStates state) {
         return Command.parallel(
-            Command.noRequirements(co2 -> {superstructureState = state;}).named("SET " + superstructureState.name()),
+            Command.noRequirements(co -> {superstructureState = state;}).named("SET " + superstructureState.name()),
             telescope.applyState(state.telescopeState),
             endEffector.applyState(state.wristState, state.rollerState),
             launcher.applyState(state.usesLauncher ? (state == SuperstructureStates.TUNING ? LauncherStates.TUNING : launcher.getScoringState()) : LauncherStates.OFF)
@@ -71,15 +68,6 @@ public class SuperstructureCommands {
             instantApplyState(state),
             hold()
         ).named(instantApplyState(state).name());
-    }
-
-    public Command setTuning() {
-        return Command.parallel(
-            Command.noRequirements(co -> {superstructureState = SuperstructureStates.TUNING;}).named("SET TUNING"),
-            telescope.applyState(TelescopeStates.TUNING),
-            endEffector.applyState(WristStates.TUNING, RollerStates.TUNING),
-            launcher.applyState(LauncherStates.TUNING)
-        ).named("TUNING");
     }
     
     public Command shuttle(Supplier<Double> distance) {
@@ -94,10 +82,6 @@ public class SuperstructureCommands {
                 )
             );
         }).named("SHUTTLE");
-    }
-
-    public CrystalColor getCrystalColor() {
-        return endEffector.crystalColor();
     }
 
     public Command score() {
@@ -132,6 +116,10 @@ public class SuperstructureCommands {
 
     public double getEEAngleFromFloorDeg() {
         return endEffector.getWristAngleDeg() - telescope.getPivotAngleDeg();
+    }
+
+    public CrystalColor getCrystalColor() {
+        return endEffector.crystalColor();
     }
 
 }

@@ -6,7 +6,6 @@ import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.math.filter.Debouncer;
 import org.wpilib.math.util.Units;
-import org.wpilib.util.Color;
 
 import first.robot.subsystems.endEffector.EEConstants.WristStates;
 import first.robot.util.LoggedTunableNumber;
@@ -38,19 +37,19 @@ public class EE extends Mechanism {
     }
 
     public void logIO() {
-            io.updateInputs(inputs);
-            Logger.processInputs("End Effector", inputs);
+        io.updateInputs(inputs);
+        Logger.processInputs("End Effector", inputs);
 
-            Logger.recordOutput("Mechanisms/End Effector/State", wristState.name() + " " + rollerState.name());
-            Logger.recordOutput("Mechanisms/End Effector/Crystal Color", crystalColor().name());
+        Logger.recordOutput("Mechanisms/End Effector/State", wristState.name() + " " + rollerState.name());
+        Logger.recordOutput("Mechanisms/End Effector/Crystal Color", crystalColor().name());
 
-            Logger.recordOutput("Mechanisms/End Effector/Wrist/Angle Deg", getWristAngleDeg());
-            Logger.recordOutput("Mechanisms/End Effector/Wrist/Setpoint Deg", wristState.angleDeg);
+        Logger.recordOutput("Mechanisms/End Effector/Wrist/Angle Deg", getWristAngleDeg());
+        Logger.recordOutput("Mechanisms/End Effector/Wrist/Setpoint Deg", wristState.angleDeg);
 
-            Logger.recordOutput("Mechanisms/End Effector/Rollers/Voltage Setpoint", rollerState.voltage);
-            Logger.recordOutput("Mechanisms/End Effector/Rollers/Voltage", inputs.rollerData.appliedVolts());
-            Logger.recordOutput("Mechanisms/End Effector/Rollers/RPS", getRollersRPS());
-            Logger.recordOutput("Mechanisms/End Effector/Rollers/Surface Speed MPS", getRollersRPS() * EEConstants.ROLLER_CIRCUMF_METERS);
+        Logger.recordOutput("Mechanisms/End Effector/Rollers/Voltage Setpoint", rollerState.voltage);
+        Logger.recordOutput("Mechanisms/End Effector/Rollers/Voltage", inputs.rollerData.appliedVolts());
+        Logger.recordOutput("Mechanisms/End Effector/Rollers/RPS", getRollersRPS());
+        Logger.recordOutput("Mechanisms/End Effector/Rollers/Surface Speed MPS", getRollersRPS() * EEConstants.ROLLER_CIRCUMF_METERS);
     }
 
     public Command applyState(WristStates wristState, RollerStates rollerState) {
@@ -64,12 +63,13 @@ public class EE extends Mechanism {
                     rawVoltage = rollerState.voltage;
                         trueAngle = Math.clamp(rawAngle + angleAdjust, EEConstants.MIN_ANGLE_DEG, EEConstants.MAX_ANGLE_DEG);
                         trueVoltage = (rollerState==RollerStates.IDLE ? 0.0 : Math.clamp(rawVoltage + voltageAdjust, -12, 12));
-                io.setWristAngleDeg(trueAngle);
-                io.setRollerVoltage(trueVoltage);
                 while(setpointDebouncer.calculate(
                     Math.abs(wristState.angleDeg - Units.rotationsToDegrees(inputs.wristData.position()) / EEConstants.WRIST_REDUCTION) > 0.5)
                 ) {
                     // functions as a timer, cmd gives up control when it's close to its setpoint (within 0.5°)
+                    io.setWristAngleDeg(trueAngle);
+                    // io.setWristAngleDeg(trueAngle, () -> 0.0);
+                    io.setRollerVoltage(trueVoltage);
                     co.yield();
                 }
             }

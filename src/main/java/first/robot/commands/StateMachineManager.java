@@ -10,13 +10,9 @@ import org.littletonrobotics.junction.Logger;
 import org.wpilib.command3.Command;
 import org.wpilib.command3.StateMachine;
 import org.wpilib.command3.StateMachine.State;
-import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.internal.DriverStationBackend;
 import org.wpilib.command3.Trigger;
 
 import first.robot.Constants.SuperstructureStates;
-import first.robot.Constants.FieldConstants.BlueFieldConstants;
-import first.robot.Constants.FieldConstants.RedFieldConstants;
 import first.robot.subsystems.drive.Drive;
 import first.robot.subsystems.endEffector.EE;
 import first.robot.subsystems.launcher.Launcher;
@@ -41,7 +37,7 @@ public class StateMachineManager {
     private final Trigger secondaryScoreTrigger;
 
     // Robot State Triggers
-    private Trigger isFront;
+    private final Trigger isFront;
 
     // public StateMachineManager(SuperstructureCommands superstructureCommands,
     //                         DriveCommands driveCommands,
@@ -78,7 +74,7 @@ public class StateMachineManager {
         primaryScoreTrigger = primaryScore;
         secondaryScoreTrigger = secondaryScore;
 
-        isFront = new Trigger(() -> drivetrain.isFront(() -> DriverStationBackend.getAlliance(), () -> superstructure.getSuperstructureState()));
+        isFront = new Trigger(() -> drivetrain.isFront(superstructure::getSuperstructureState));
     }
 
     public StateMachine teleop() {
@@ -110,7 +106,6 @@ public class StateMachineManager {
         // Binding Triggers
             // we will always go to HOME when homeTrigger is triggered
             stateMachine.setInitialState(HOME);
-            stateMachine.switchFromAny().to(HOME).when(homeTrigger);
 
             // HOME, INTAKE, and OUTTAKE can freely switch to each other
             stateMachine.switchFromAny(HOME, OUTTAKING).to(INTAKING).when(intakeTrigger);
@@ -130,6 +125,9 @@ public class StateMachineManager {
             stateMachine.switchFromAny(HOME, L1_FRONT, L1_BACK, L2_FRONT, L2_BACK, IDLING)
                     .to(() -> isFront.getAsBoolean() ? CLASSIFIER_FRONT : CLASSIFIER_BACK).when(classifierTrigger);
 
+            stateMachine.switchFromAny(L1_FRONT, L1_BACK, L2_FRONT, L2_BACK, CLASSIFIER_FRONT, CLASSIFIER_BACK, IDLING)
+                    .to(HOME).when(homeTrigger);
+
             // no matter the direction or scoring state, pressing scoreTrigger will align
             stateMachine.switchFromAny(L1_FRONT, L1_BACK, L2_FRONT, L2_BACK, CLASSIFIER_FRONT, CLASSIFIER_BACK, IDLING)
                         .to(COLORED_ALIGN).when(primaryScoreTrigger.risingEdge());
@@ -138,6 +136,7 @@ public class StateMachineManager {
             stateMachine.switchFromAny(L1_FRONT, L1_BACK, L2_FRONT, L2_BACK, CLASSIFIER_FRONT, CLASSIFIER_BACK, IDLING)
                         .to(NEUTRAL_ALIGN).when(secondaryScoreTrigger.risingEdge());
             // NEUTRAL is mapped to secondaryScore because COLORED earns more points, would change if driver shows preference to one config or the other
+            // COLORED will run NEUTRAL if there is no color (which technically shouldn't happen irl)
             
             // if the driver second guesses while aligning, letting go of the score trigger will enter a IDLING state
             // IDLING maintains current setpoints so driver can continue or pivot if they want to
@@ -162,7 +161,7 @@ public class StateMachineManager {
 
 
 
-            // when goToClimbTrigger is triggered, we will begin climb sequence with CLIMB_RAISED
+            // when climbTrigger is triggered, we will begin climb sequence with CLIMB_RAISED
             HOME.switchTo(CLIMB_RAISED).when(climbTrigger);
             CLIMB_RAISED.switchTo(CLIMB).when(primaryScoreTrigger);
             // marks CLIMB as the final command
@@ -236,7 +235,7 @@ public class StateMachineManager {
         return superstructure.instantApplyState(SuperstructureStates.TUNING);
     }
 
-    public void logData() {
+    public void logAdditionalData() {
         Logger.recordOutput("Mechanisms/Superstructure State", superstructure.getSuperstructureState().name());
         Logger.recordOutput("Mechanisms/End Effector/Wrist/Angle From Floor Deg", superstructure.getEEAngleFromFloorDeg());
     }

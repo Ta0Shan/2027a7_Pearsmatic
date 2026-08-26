@@ -20,48 +20,48 @@ import org.wpilib.math.util.Units;
 import org.wpilib.driverstation.internal.DriverStationBackend;
 import org.wpilib.driverstation.Alliance;
 import org.wpilib.system.Timer;
-import org.wpilib.units.measure.Angle;
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.command3.Command;
 
-import first.robot.Constants;
 import first.robot.Constants.CrystalColor;
 import first.robot.Constants.FieldConstants;
 import first.robot.Constants.SuperstructureStates;
 import first.robot.Constants.FieldConstants.BlueFieldConstants;
 import first.robot.Constants.FieldConstants.RedFieldConstants;
 import first.robot.subsystems.drive.Drive;
+import first.robot.util.LoggedTunableNumber;
 
-import static org.wpilib.units.Units.Rotation;
 import static org.wpilib.units.Units.Seconds;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.time.temporal.IsoFields;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 public class DriveCommands {
 
     private final Drive drive;
-    private final Supplier<Pose2d> drivePose;
 
     private static final double DEADBAND = 0.1;
-    private static final double ANGLE_KP = 7.0;
-    private static final double ANGLE_KD = 0.4;
-    private static final double ANGLE_MAX_VELOCITY = Units.degreesToRadians(360);
-    private static final double ANGLE_MAX_ACCELERATION = Units.degreesToRadians(720);
-
-    private static final double DRIVE_kP = 7.0;
-    private static final double DRIVE_kD = 0.4;
-    private static final double DRIVE_MAX_VELOCITY = 4.0; // m/s
-    private static final double DRIVE_MAX_ACCELERATION = 10.0; // m/s/s
+    // private static final double ANGLE_KP = 7.0;
+    // private static final double ANGLE_KD = 0.4;
+    // private static final double ANGLE_MAX_VELOCITY = Units.degreesToRadians(360);
+    // private static final double ANGLE_MAX_ACCELERATION = Units.degreesToRadians(720);
+    private final LoggedTunableNumber anglekP = new LoggedTunableNumber("Align/Angle/kP", 7.0);
+    private final LoggedTunableNumber anglekD = new LoggedTunableNumber("Align/Angle/kD", 0.4);
+    private final LoggedTunableNumber angleMaxVel = new LoggedTunableNumber("Align/Angle/Max Velocity Deg", 360.0);
+    private final LoggedTunableNumber angleMaxAccel = new LoggedTunableNumber("Align/Angle/Max Acceleration Deg", 720.0);
+    
+    // private static final double DRIVE_kP = 7.0;
+    // private static final double DRIVE_kD = 0.4;
+    // private static final double DRIVE_MAX_VELOCITY = 4.0; // m/s
+    // private static final double DRIVE_MAX_ACCELERATION = 10.0; // m/s/s
+    private final LoggedTunableNumber drivekP = new LoggedTunableNumber("Align/Drive/kP", 7.0);
+    private final LoggedTunableNumber drivekD = new LoggedTunableNumber("Align/Drive/kD", 0.4);
+    private final LoggedTunableNumber driveMaxVel = new LoggedTunableNumber("Align/Drive/Max Velocity m/s", 4.0);
+    private final LoggedTunableNumber driveMaxAccel = new LoggedTunableNumber("Align/Drive/Max Acceleration m/s/s", 10.0);
 
     // Characterization has been commented because sim is ideal and ideally everything works
     private static final double FF_START_DELAY = 2.0; // Secs
@@ -71,7 +71,6 @@ public class DriveCommands {
 
     public DriveCommands(Drive drive) {
         this.drive = drive;
-        drivePose = () -> this.drive.getPose();
     }
 
     private static Translation2d getLinearVelocityFromJoysticks(double x, double y) {
@@ -142,10 +141,10 @@ public class DriveCommands {
             // Create PID controller
             ProfiledPIDController angleController =
                 new ProfiledPIDController(
-                    ANGLE_KP,
+                    anglekP.get(),
                     0.0,
-                    ANGLE_KD,
-                    new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
+                    anglekD.get(),
+                    new TrapezoidProfile.Constraints(Units.degreesToRadians(angleMaxVel.get()), Units.degreesToRadians(angleMaxAccel.get())));
             angleController.enableContinuousInput(-Math.PI, Math.PI);
 
             // Reset PID controller when command starts
@@ -187,16 +186,17 @@ public class DriveCommands {
 
             Pose2d goal = pose.get();
 
-            Logger.recordOutput("Align/Travel Trajectory", new Translation2d[] {drive.getPose().getTranslation(), goal.getTranslation()});
+            Logger.recordOutput("Align/Trajectory", new Translation2d[] {drive.getPose().getTranslation(), goal.getTranslation()});
 
             // Create PID controller
             ProfiledPIDController angleController =
                 new ProfiledPIDController(
-                    ANGLE_KP,
+                    anglekP.get(),
                     0.0,
-                    ANGLE_KD,
-                    new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
+                    anglekD.get(),
+                    new TrapezoidProfile.Constraints(Units.degreesToRadians(angleMaxVel.get()), Units.degreesToRadians(angleMaxAccel.get())));
             angleController.enableContinuousInput(-Math.PI, Math.PI);
+            angleController.setGoal(goal.getRotation().getRadians());
             angleController.setTolerance(Units.degreesToRadians(1.));
 
             // Reset PID controller when command starts
@@ -204,10 +204,10 @@ public class DriveCommands {
 
             ProfiledPIDController driveController =
                 new ProfiledPIDController(
-                    DRIVE_kP,
+                    drivekP.get(),
                     0.0,
-                    DRIVE_kD,
-                    new TrapezoidProfile.Constraints(DRIVE_MAX_VELOCITY, DRIVE_MAX_ACCELERATION));
+                    drivekD.get(),
+                    new TrapezoidProfile.Constraints(driveMaxVel.get(), driveMaxAccel.get()));
             
             Translation2d error = goal.minus(drive.getPose()).getTranslation();
             Rotation2d direction = error.getAngle();
@@ -217,6 +217,7 @@ public class DriveCommands {
             
             driveController.reset(error.getNorm(), velocityTowardsTarget); // "current position"
             // we set the position this way because the goal (pose) is thus (0, 0): that way, the drive pose IS the error
+            driveController.setGoal(0);
             driveController.setTolerance(Units.inchesToMeters(1));
 
             while(!driveController.atGoal() || !angleController.atGoal()) {
@@ -226,14 +227,11 @@ public class DriveCommands {
                 // flipped because the direction of the error vector is opposite the direction of the necessary robot velocity vector
 
                 double twist = 
-                    angleController.calculate(
-                        drive.getRotation().getRadians(),
-                        goal.getRotation().getRadians());
+                    angleController.calculate(drive.getRotation().getRadians());
                 
                 double velocity = 
                     driveController.calculate(
-                        error.getNorm(), // negative because this is the magnitude
-                        0); // because the goal is being treated as (0, 0)
+                        error.getNorm());
                 
                 Translation2d throttle = new Translation2d(
                     velocity,
@@ -332,8 +330,8 @@ public class DriveCommands {
         }).named("CLASSIFIER ALIGN");
     }
 
-    public boolean isFront(Supplier<Optional<Alliance>> alliance, Supplier<SuperstructureStates> state) {
-        boolean isRed = alliance.get().orElse(Alliance.RED) == Alliance.RED;
+    public boolean isFront(Supplier<SuperstructureStates> state) {
+        boolean isRed = DriverStationBackend.getAlliance().orElse(Alliance.RED) == Alliance.RED;
         boolean isClassifier = state.get() == SuperstructureStates.CLASSIFIER_FRONT || state.get() == SuperstructureStates.CLASSIFIER_BACK;
         if (isRed) { // if isRed
             if (isClassifier) {
@@ -387,8 +385,8 @@ public class DriveCommands {
 
 
 
-    private List<Double> velocitySamples = new LinkedList<>();
-    private List<Double> voltageSamples = new LinkedList<>();
+    private ArrayList<Double> velocitySamples = new ArrayList<Double>();
+    private ArrayList<Double> voltageSamples = new ArrayList<Double>();
 
     /**
     * Measures the velocity feedforward constants for the drive motors.
@@ -404,6 +402,7 @@ public class DriveCommands {
 
             // Allow modules to orient
             drive.runCharacterization(0.0);
+            co.wait(Seconds.of(FF_START_DELAY));
 
             // Start timer
             timer.restart();        
@@ -425,10 +424,10 @@ public class DriveCommands {
             double sumXY = 0.0;
             double sumX2 = 0.0;
             for (int i = 0; i < n; i++) {
-            sumX += velocitySamples.get(i);
-            sumY += voltageSamples.get(i);
-            sumXY += velocitySamples.get(i) * voltageSamples.get(i);
-            sumX2 += velocitySamples.get(i) * velocitySamples.get(i);
+                sumX += velocitySamples.get(i);
+                sumY += voltageSamples.get(i);
+                sumXY += velocitySamples.get(i) * voltageSamples.get(i);
+                sumX2 += velocitySamples.get(i) * velocitySamples.get(i);
             }
             double kS = (sumY * sumX2 - sumX * sumXY) / (n * sumX2 - sumX * sumX);
             double kV = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);

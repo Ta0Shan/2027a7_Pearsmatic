@@ -140,7 +140,6 @@ public abstract class TelescopeIOTalonFX implements TelescopeIO {
             arm1.setControl(new NeutralOut());
             PhoenixUtil.tryUntilOk(5, () -> arm1.setPosition(arm1.getPosition().getValueAsDouble() / ArmConstants.EXTENSION_REDUCTION * ArmConstants.CLIMB_REDUCTION));
             PhoenixUtil.tryUntilOk(5, () -> arm2.setPosition(arm2.getPosition().getValueAsDouble() / ArmConstants.EXTENSION_REDUCTION * ArmConstants.CLIMB_REDUCTION));
-
         }
     }
 }

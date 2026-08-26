@@ -1,7 +1,6 @@
 package first.robot.subsystems.endEffector;
 
 import org.wpilib.math.util.Units;
-import org.wpilib.util.Color;
 
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;

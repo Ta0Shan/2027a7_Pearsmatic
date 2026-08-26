@@ -14,17 +14,13 @@ import org.wpilib.command3.Command;
 import org.wpilib.command3.Scheduler;
 import org.wpilib.command3.SchedulerEvent.CompletedWithError;
 import org.wpilib.command3.SchedulerEvent.Interrupted;
-// import org.wpilib.math.geometry.Pose2d;
-// import org.wpilib.math.geometry.Rotation2d;
-// import org.wpilib.math.geometry.Translation2d;
+
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation2d;
 
 import first.robot.Constants.FieldConstants.BlueFieldConstants;
-
-// import first.robot.Constants.FieldConstants;
-// import first.robot.Constants.FieldConstants.BlueFieldConstants;
-// import first.robot.Constants.FieldConstants.RedFieldConstants;
-// import first.robot.Constants.FieldConstants.BlueFieldConstants;
+import first.robot.Constants.FieldConstants.RedFieldConstants;
 
 import org.wpilib.command3.SchedulerEvent.Canceled;
 
@@ -51,9 +47,10 @@ public class Robot extends LoggedRobot {
     // Logger.recordOutput("Field/Center", new Pose2d(FieldConstants.CENTER, Rotation2d.kZero));
     
     // Logger.recordOutput("Field/Blue/Cave Center", new Pose2d(BlueFieldConstants.CAVE_CENTER, Rotation2d.kZero));
-    // Logger.recordOutput("Field/Blue/Cave Faces", BlueFieldConstants.CAVE_FACES);
-    Logger.recordOutput("Field/Blue/Classifier", new Translation2d[] {BlueFieldConstants.CLASSIFIER_SOURCE_CORNER, BlueFieldConstants.CLASSIFIER_MINE_CORNER});
-    Logger.recordOutput("Field/Blue/Classifier Center", BlueFieldConstants.CLASSIFIER_CENTER);
+    // Logger.recordOutput("Field/Blue/Lower Shaft Faces", BlueFieldConstants.LOWER_SHAFT_FACES);
+    // Logger.recordOutput("Field/Blue/Upper Shaft Vertices", BlueFieldConstants.UPPER_SHAFT_VERTICES);
+    // Logger.recordOutput("Field/Blue/Classifier", new Translation2d[] {BlueFieldConstants.CLASSIFIER_SOURCE_CORNER, BlueFieldConstants.CLASSIFIER_MINE_CORNER});
+    // Logger.recordOutput("Field/Blue/Classifier Center", BlueFieldConstants.CLASSIFIER_CENTER);
     // Logger.recordOutput("Field/Blue/Mine", new Translation2d[] {BlueFieldConstants.MINE_CENTER, BlueFieldConstants.MINE_CENTER_CORNER, BlueFieldConstants.MINE_DS_CORNER});
     // Logger.recordOutput("Field/Blue/Source", new Translation2d[] {BlueFieldConstants.SOURCE_CENTER, BlueFieldConstants.SOURCE_DS_CORNER, BlueFieldConstants.SOURCE_WALL_CORNER});
 
@@ -137,7 +134,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void teleopInit() {
     scheduler.schedule(robotContainer.teleopSM());
-    robotContainer.enableAdjustmentBindings();
+    robotContainer.teleopBindings();
   }
 
   @Override
@@ -151,7 +148,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void utilityInit() {
-    robotContainer.enableTuningBindings();
+    robotContainer.utilityBindings();
     // robotContainer.enableAdjustmentBindings();
   }
 

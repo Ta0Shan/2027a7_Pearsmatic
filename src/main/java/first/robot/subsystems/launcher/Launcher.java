@@ -1,7 +1,5 @@
 package first.robot.subsystems.launcher;
 
-import java.util.function.DoubleSupplier;
-
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.command3.Command;
@@ -78,15 +76,17 @@ public class Launcher extends Mechanism {
             }
             if(state == LauncherStates.TUNING) {
                 co.fork(setScoringState(state));
-                if (tunableRPS.hasChanged(tunableRPS.hashCode())) rawMeanTarget = tunableRPS.get();
-                meanRPSTarget = Math.clamp(rawMeanTarget + adjust, -LauncherConstants.FLYWHEEL_MAX_SPEED_RPS, LauncherConstants.FLYWHEEL_MAX_SPEED_RPS);
-                io.setLauncherRPS(meanRPSTarget);
+                while(true) {
+                    if (tunableRPS.hasChanged(tunableRPS.hashCode())) rawMeanTarget = tunableRPS.get();
+                    meanRPSTarget = Math.clamp(rawMeanTarget + adjust, -LauncherConstants.FLYWHEEL_MAX_SPEED_RPS, LauncherConstants.FLYWHEEL_MAX_SPEED_RPS);
+                    io.setLauncherRPS(meanRPSTarget);
+                }
             }
         }).named("LAUNCHER " + state);
     }
 
     public Command setScoringState(LauncherStates state) {
-        return Command.noRequirements(co -> {this.scoringState = state;}).named("");
+        return Command.noRequirements(co -> {if(state != LauncherStates.OFF) this.scoringState = state;}).named("");
     }
 
     public Command adjustRPS(double by) {
@@ -110,13 +110,5 @@ public class Launcher extends Mechanism {
     public double getMeanRPS() {
         return ((inputs.launcher1Data.velocity() + inputs.launcher2Data.velocity()) / 2) / LauncherConstants.REDUCTION;
     }
-
-    private double mean(double... values) {
-        double sum = 0.0;
-        for (double value : values) {
-            sum += value;
-        }
-        return (sum / values.length);
-  }
 
 }

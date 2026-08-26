@@ -3,7 +3,6 @@ package first.robot.subsystems.endEffector;
 import java.util.function.DoubleSupplier;
 
 import org.littletonrobotics.junction.AutoLog;
-import org.wpilib.util.Color;
 
 import first.robot.Constants.CrystalColor;
 import first.robot.util.PearadoxTalonFX.MotorData;

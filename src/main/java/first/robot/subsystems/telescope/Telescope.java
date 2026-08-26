@@ -68,13 +68,15 @@ public class Telescope extends Mechanism {
                     rawExtension = state.armExtensionInches;
                         trueAngle = Math.clamp(rawAngle + angleAdjust, PivotConstants.MIN_ANGLE_DEG, PivotConstants.MAX_ANGLE_DEG);
                         trueExtension = Math.clamp(rawExtension + extensionAdjust, Units.metersToInches(ArmConstants.MIN_EXTENSION_METERS), Units.metersToInches(ArmConstants.MAX_EXTENSION_METERS));
-                io.setPivotAngleDeg(trueAngle);
-                io.setArmExtensionIn(state==TelescopeStates.CLUMB, trueExtension);
                 while(setpointDebouncer.calculate(
-                        Math.abs((state.pivotAngleDeg - Units.rotationsToDegrees(inputs.pivotAbsEncoderPosition))) > 0.5
-                        || Math.abs(getArmSetpoint(state) - getArmExtensionInches()) > 0.05)
-                    ) {
+                    Math.abs((state.pivotAngleDeg - Units.rotationsToDegrees(inputs.pivotAbsEncoderPosition))) > 0.5
+                    || Math.abs(getArmSetpoint(state) - getArmExtensionInches()) > 0.05)
+                ) {
                     // functions as a timer, cmd gives up control when it's close to its setpoint (within 0.5° and 0.05");
+                    io.setPivotAngleDeg(trueAngle);
+                    // io.setPivotAngleDeg(trueAngle, () -> 0.0);
+                    io.setArmExtensionIn(state==TelescopeStates.CLUMB, trueExtension);
+                    // io.setArmExtensionIn(state==TelescopeStates.CLUMB, trueExtension, () -> 0.0);
                     co.yield();
                 }
                 if (state == TelescopeStates.CLIMB_RAISED) {
@@ -100,7 +102,7 @@ public class Telescope extends Mechanism {
         return run(co -> {
             this.isClimbing = isClimbing;
             io.shiftDogs(isClimbing);
-            co.wait(Seconds.of(1.0));
+            co.wait(Seconds.of(ArmConstants.SHIFT_DURATION_SEC));
         }).named("SWITCH TO " + (isClimbing ? "CLIMB" : "EXTENSION"));
     }
 

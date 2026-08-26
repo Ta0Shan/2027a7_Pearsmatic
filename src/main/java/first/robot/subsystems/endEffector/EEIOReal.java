@@ -25,6 +25,12 @@ public class EEIOReal extends EEIOTalonFX {
             GainFactor.kGain3x);
     }
 
+    @Override
+    public void updateInputs(EEIOInputs inputs) {
+        super.updateInputs(inputs);
+        inputs.colorReading = getColorReading();
+    }
+
     public CrystalColor getColorReading() {
         Color reading = colorSensor.getColor();
         Color output = Color.BLACK;

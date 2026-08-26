@@ -4,14 +4,11 @@
 
 package first.robot;
 
-import static org.wpilib.units.Units.Seconds;
-
 import java.util.ArrayList;
 
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Trigger;
 import org.wpilib.command3.button.CommandNiDsXboxController;
-import org.wpilib.driverstation.NiDsXboxController;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.smartdashboard.SendableChooser;
@@ -39,6 +36,7 @@ import first.robot.subsystems.launcher.Launcher;
 import first.robot.subsystems.launcher.LauncherIO;
 import first.robot.subsystems.launcher.LauncherIOReal;
 import first.robot.subsystems.launcher.LauncherIOSim;
+import first.robot.subsystems.launcher.LauncherConstants.LauncherStates;
 import first.robot.subsystems.telescope.Telescope;
 import first.robot.subsystems.telescope.TelescopeIO;
 import first.robot.subsystems.telescope.TelescopeIOReal;
@@ -50,6 +48,7 @@ public class RobotContainer {
 
   public final CommandNiDsXboxController driver;
   public final CommandNiDsXboxController operator;
+  public final CommandNiDsXboxController keyboard;
   private ArrayList<Trigger> boundTriggers;
 
   private final SendableChooser<Command> autoChooser;
@@ -69,6 +68,7 @@ public class RobotContainer {
   public RobotContainer() {
     driver = new CommandNiDsXboxController(0);
     operator = new CommandNiDsXboxController(1);
+    keyboard = new CommandNiDsXboxController(4);
     boundTriggers = new ArrayList<Trigger>();
 
     autoChooser = new SendableChooser<>();
@@ -154,11 +154,16 @@ public class RobotContainer {
     boundTriggers.add(trigger);
   }
 
-  public void enableAdjustmentBindings() {
+  public void teleopBindings() {
     // all direct robot controls are bound in the state machine already
     bind(driver.start().onTrue(Command.requiring(drive).executing(co -> {
       drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d()));
     }).named("RESET HEADING")));
+
+    bind(operator.y().onTrue(launcher.setScoringState(LauncherStates.SELF_DIRECTING)));
+    bind(operator.x().onTrue(launcher.setScoringState(LauncherStates.MANUAL)));
+
+
 
     Trigger operatorLeftYUp = new Trigger(() -> operator.getLeftY() < -0.9);
     bind(operatorLeftYUp.whileTrue(telescope.adjustAngleDeg(10 / Constants.LOOP_FREQ_HZ)));
@@ -178,17 +183,17 @@ public class RobotContainer {
     bind(operator.leftBumper().whileTrue(launcher.adjustRPS(-1 / Constants.LOOP_FREQ_HZ)));
   }
 
-  public void enableTuningBindings() {
-    bind(operator.start().onTrue(SMManager.functional()));
-    bind(operator.back().onTrue(SMManager.tuning()));
-    bind(driver.back().onTrue(SMManager.teleop()));
+  public void utilityBindings() {
+    bind(operator.start().toggleOnTrue(SMManager.functional()));
+    bind(operator.back().toggleOnTrue(SMManager.tuning()));
+    bind(driver.back().toggleOnTrue(SMManager.teleop()));
   }
 
-  public void enableColorChangeBindings() {
-    bind(operator.a().onTrue(endEffector.setCrystalColor(CrystalColor.ORANGE)));
-    bind(operator.b().onTrue(endEffector.setCrystalColor(CrystalColor.GREEN)));
-    bind(operator.x().onTrue(endEffector.setCrystalColor(CrystalColor.YELLOW)));
-    bind(operator.y().onTrue(endEffector.setCrystalColor(CrystalColor.PURPLE)));
+  public void colorChangeBindings() {
+    bind(keyboard.a().onTrue(endEffector.setCrystalColor(CrystalColor.ORANGE))); // Z
+    bind(keyboard.b().onTrue(endEffector.setCrystalColor(CrystalColor.GREEN)));  // X
+    bind(keyboard.x().onTrue(endEffector.setCrystalColor(CrystalColor.YELLOW))); // C
+    bind(keyboard.y().onTrue(endEffector.setCrystalColor(CrystalColor.PURPLE))); // V
   }
 
   public void unbindAll() {
@@ -215,7 +220,7 @@ public class RobotContainer {
     telescope.logIO();
     launcher.logIO();
     endEffector.logIO();
-    SMManager.logData();
+    SMManager.logAdditionalData();
     if (Constants.currentMode!=Mode.REAL) {
       visualizer2d.updateVis(
         telescope.getPivotAngleDeg(),
