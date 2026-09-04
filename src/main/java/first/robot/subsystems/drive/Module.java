@@ -20,8 +20,8 @@ import org.wpilib.math.kinematics.SwerveModulePosition;
 import org.wpilib.math.kinematics.SwerveModuleVelocity;
 import org.wpilib.math.util.Units;
 import org.wpilib.system.RobotController;
-import org.wpilib.driverstation.Alert;
-import org.wpilib.driverstation.Alert.Level;
+import org.wpilib.util.Alert;
+import org.wpilib.util.Alert.Level;
 
 public class Module {
   private final ModuleIO io;
@@ -103,7 +103,7 @@ public class Module {
   /** Runs the module with the specified output while controlling to zero degrees. */
   public void runCharacterization(double output) {
     io.setDriveOpenLoop(output);
-    io.setTurnPosition(Rotation2d.kZero);
+    io.setTurnPosition(Rotation2d.ZERO);
   }
 
   /** Disables all outputs to motors. */

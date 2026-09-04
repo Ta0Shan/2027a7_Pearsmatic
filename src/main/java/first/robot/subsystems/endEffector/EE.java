@@ -12,7 +12,7 @@ import first.robot.util.LoggedTunableNumber;
 import first.robot.Constants.CrystalColor;
 import first.robot.subsystems.endEffector.EEConstants.RollerStates;
 
-public class EE extends Mechanism {
+public class EE implements Mechanism {
 
     private final EEIO io;
 

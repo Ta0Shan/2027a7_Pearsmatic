@@ -40,12 +40,12 @@ import org.wpilib.math.numbers.N3;
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.command3.Command; // sysId doesn't exist in cmdv3 so all the commands to run sysId are commented out, hopefully they add sysId or a replacement
-import org.wpilib.driverstation.Alert;
-import org.wpilib.driverstation.Alert.Level;
+import org.wpilib.util.Alert;
+import org.wpilib.util.Alert.Level;
 import org.wpilib.driverstation.internal.DriverStationBackend;
 import org.wpilib.driverstation.Alliance; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they update the vendordep
 
-public class Drive extends Mechanism {
+public class Drive implements Mechanism {
   // TunerConstants doesn't include these constants, so they are declared locally
   static final double ODOMETRY_FREQUENCY = TunerConstants.kCANBus.isNetworkFD() ? 250.0 : 100.0;
   public static final double DRIVE_BASE_RADIUS =
@@ -85,7 +85,7 @@ public class Drive extends Mechanism {
       new Alert("Disconnected gyro, using kinematics as fallback.", Level.HIGH);
 
   private SwerveDriveKinematics kinematics = new SwerveDriveKinematics(getModuleTranslations());
-  private Rotation2d rawGyroRotation = Rotation2d.kZero;
+  private Rotation2d rawGyroRotation = Rotation2d.ZERO;
   private SwerveModulePosition[] lastModulePositions = // For delta tracking
       new SwerveModulePosition[] {
         new SwerveModulePosition(),
@@ -94,7 +94,7 @@ public class Drive extends Mechanism {
         new SwerveModulePosition()
       };
   private SwerveDrivePoseEstimator poseEstimator =
-      new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
+      new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.ZERO);
 
   public Drive(
       GyroIO gyroIO,
@@ -118,7 +118,7 @@ public class Drive extends Mechanism {
     // AutoBuilder.configure(
     //     this::getPose,
     //     this::setPose,
-    //     this::getChassisSpeeds,
+    //     this::getChassisVelocities,
     //     this::runVelocity,
     //     new PPHolonomicDriveController(
     //         new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
@@ -248,7 +248,7 @@ public class Drive extends Mechanism {
   public void stopWithX() {
       Rotation2d[] headings = new Rotation2d[4];
       for (int i = 0; i < 4; i++) {
-        headings[i] = getModuleTranslations()[i].getAngle();
+        headings[i] = getModuleTranslations()[i].getAngle().get();
       }
       kinematics.resetHeadings(headings);
       stop();

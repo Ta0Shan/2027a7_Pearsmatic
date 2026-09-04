@@ -34,7 +34,7 @@ public class SuperstructureCommands {
     private final InterpolatingDoubleTreeMap rpsLerp = new InterpolatingDoubleTreeMap();
     private final LoggedTunableNumber manualSetpoint = new LoggedTunableNumber("Launcher/Manual Setpoint", 30.0);
 
-    // private final Debouncer scoreDebouncer = new Debouncer(1, DebounceType.kFalling);
+    // private final Debouncer scoreDebouncer = new Debouncer(1, DebounceType.FALLING);
 
     // private final Drive drive;
 
@@ -88,7 +88,7 @@ public class SuperstructureCommands {
         return Command.requiring(endEffector).executing(co -> {
             co.fork(endEffector.applyState(superstructureState == SuperstructureStates.LAUNCHER ? RollerStates.FAST_REV : RollerStates.REV));
             // co.await(pause(0.5));
-            Debouncer scoreDebouncer = new Debouncer(0.3, DebounceType.kFalling);
+            Debouncer scoreDebouncer = new Debouncer(0.3, DebounceType.FALLING);
             while(scoreDebouncer.calculate(endEffector.hasCrystal())) {
                 co.yield();
             }

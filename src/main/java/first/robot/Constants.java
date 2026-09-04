@@ -102,7 +102,7 @@ public class Constants {
         }
 
         private static final Pose2d flipXAcrossCenter(Pose2d pose) {
-            return new Pose2d(CENTER.minus(pose.getTranslation()).getX(), pose.getY(), pose.getRotation().plus(Rotation2d.kCCW_90deg.minus(pose.getRotation()).times(2)));
+            return new Pose2d(CENTER.minus(pose.getTranslation()).getX(), pose.getY(), pose.getRotation().plus(Rotation2d.CCW_90DEG.minus(pose.getRotation()).times(2)));
         }
 
         // OVERALL CONSTANTS
@@ -113,9 +113,9 @@ public class Constants {
         private static final double SHORT_OFFSET = Units.inchesToMeters(2);
         private static final double LONG_OFFSET = Units.inchesToMeters(6);
         public static final Transform2d ALIGN_OFFSET_SHORT =
-            new Transform2d(new Translation2d((ROBOT_LENGTH_WITH_BUMPERS)/2+SHORT_OFFSET, Rotation2d.k180deg), Rotation2d.kZero);
+            new Transform2d(new Translation2d((ROBOT_LENGTH_WITH_BUMPERS)/2+SHORT_OFFSET, Rotation2d.PI), Rotation2d.ZERO);
         public static final Transform2d ALIGN_OFFSET_LONG =
-            new Transform2d(new Translation2d((ROBOT_LENGTH_WITH_BUMPERS/2)+LONG_OFFSET, Rotation2d.k180deg), Rotation2d.kZero);
+            new Transform2d(new Translation2d((ROBOT_LENGTH_WITH_BUMPERS/2)+LONG_OFFSET, Rotation2d.PI), Rotation2d.ZERO);
         
         public static final double MINE_OUTER_WIDTH = Units.inchesToMeters(50.75);
         public static final double MINE_PILLAR_LENGTH = Units.inchesToMeters(12.0);
@@ -137,32 +137,32 @@ public class Constants {
             static {
                 for (int i = 0; i < LOWER_SHAFT_FACES.length; i++) {
                     Rotation2d angle = new Rotation2d(Units.degreesToRadians(45 * i + 22.5));
-                    LOWER_SHAFT_FACES[i] = new Pose2d(CAVE_CENTER.plus(new Translation2d(Units.inchesToMeters(32.50 + 10), angle)), angle.minus(Rotation2d.k180deg));
+                    LOWER_SHAFT_FACES[i] = new Pose2d(CAVE_CENTER.plus(new Translation2d(Units.inchesToMeters(32.50 + 10), angle)), angle.minus(Rotation2d.PI));
                 }
             }
             public static final Pose2d[] UPPER_SHAFT_VERTICES = new Pose2d[4];
             static {
                 for (int i = 0; i < UPPER_SHAFT_VERTICES.length; i++) {
                     Rotation2d angle = new Rotation2d(Units.degreesToRadians(90 * i + 45));
-                    UPPER_SHAFT_VERTICES[i] = new Pose2d(CAVE_CENTER.plus(new Translation2d(Units.inchesToMeters(12.176912 + 33.917166), angle)), angle.minus(Rotation2d.k180deg));
+                    UPPER_SHAFT_VERTICES[i] = new Pose2d(CAVE_CENTER.plus(new Translation2d(Units.inchesToMeters(12.176912 + 33.917166), angle)), angle.minus(Rotation2d.PI));
                 }
             }
 
             // CLASSIFIER
             public static final Translation2d CLASSIFIER_SOURCE_CORNER = CENTER.plus(new Translation2d(Units.inchesToMeters(324.797850), -Units.inchesToMeters(25.777159)));
             public static final Translation2d CLASSIFIER_MINE_CORNER = CLASSIFIER_SOURCE_CORNER.minus(new Translation2d(0, Units.inchesToMeters(62)));
-            public static final Pose2d CLASSIFIER_CENTER = new Pose2d(CLASSIFIER_SOURCE_CORNER.plus(CLASSIFIER_MINE_CORNER.minus(CLASSIFIER_SOURCE_CORNER).div(2)), Rotation2d.kZero);
+            public static final Pose2d CLASSIFIER_CENTER = new Pose2d(CLASSIFIER_SOURCE_CORNER.plus(CLASSIFIER_MINE_CORNER.minus(CLASSIFIER_SOURCE_CORNER).div(2)), Rotation2d.ZERO);
             public static final Translation2d CLASSIFIER_AIM_TARGET = CLASSIFIER_CENTER.getTranslation().minus(new Translation2d(2, 0));
 
             // STATION
             public static final Translation2d SOURCE_WALL_CORNER = CENTER.plus(new Translation2d(-Units.inchesToMeters(255.446748), Units.inchesToMeters(159.593244)));
             public static final Translation2d SOURCE_DS_CORNER = CENTER.plus(new Translation2d(-Units.inchesToMeters(324.526445), Units.inchesToMeters(119.742799)));
-            public static final Pose2d SOURCE_CENTER = new Pose2d(SOURCE_WALL_CORNER.plus(SOURCE_DS_CORNER.minus(SOURCE_WALL_CORNER).div(2)), SOURCE_DS_CORNER.minus(SOURCE_WALL_CORNER).getAngle().plus(Rotation2d.kCCW_90deg));
+            public static final Pose2d SOURCE_CENTER = new Pose2d(SOURCE_WALL_CORNER.plus(SOURCE_DS_CORNER.minus(SOURCE_WALL_CORNER).div(2)), SOURCE_DS_CORNER.minus(SOURCE_WALL_CORNER).getAngle().get().plus(Rotation2d.CCW_90DEG));
 
             // MINE
             public static final Translation2d MINE_CENTER_CORNER = CENTER.plus(new Translation2d(Units.inchesToMeters(125.785719), -Units.inchesToMeters(107.027159)));
             public static final Translation2d MINE_DS_CORNER = CENTER.plus(new Translation2d(Units.inchesToMeters(268.535719), -Units.inchesToMeters(107.027159)));
-            public static final Pose2d MINE_CENTER = new Pose2d(MINE_CENTER_CORNER.plus(new Translation2d(MINE_DS_CORNER.minus(MINE_CENTER_CORNER).div(2).getX(), -(MINE_PILLAR_LENGTH + (MINE_OUTER_WIDTH / 2.)))), Rotation2d.kZero);
+            public static final Pose2d MINE_CENTER = new Pose2d(MINE_CENTER_CORNER.plus(new Translation2d(MINE_DS_CORNER.minus(MINE_CENTER_CORNER).div(2).getX(), -(MINE_PILLAR_LENGTH + (MINE_OUTER_WIDTH / 2.)))), Rotation2d.ZERO);
         }
 
         /** Constants for the red side of the field.

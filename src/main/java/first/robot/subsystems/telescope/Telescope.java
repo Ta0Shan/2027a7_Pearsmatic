@@ -19,7 +19,7 @@ import first.robot.subsystems.telescope.TelescopeConstants.PivotConstants;
 import first.robot.subsystems.telescope.TelescopeConstants.TelescopeStates;
 import first.robot.util.LoggedTunableNumber;
 
-public class Telescope extends Mechanism {
+public class Telescope implements Mechanism {
     private final TelescopeIO io;
 
     private final TelescopeIOInputsAutoLogged inputs = new TelescopeIOInputsAutoLogged();
@@ -63,7 +63,7 @@ public class Telescope extends Mechanism {
             } // if the driver switches away from climbing it un-engages the dog shifter to make sure extension still works properly
             // normal logic, will complete naturally
             if (state != TelescopeStates.TUNING) {
-                Debouncer setpointDebouncer = new Debouncer(0.2, DebounceType.kFalling);
+                Debouncer setpointDebouncer = new Debouncer(0.2, DebounceType.FALLING);
                     rawAngle = state.pivotAngleDeg;
                     rawExtension = state.armExtensionInches;
                         trueAngle = Math.clamp(rawAngle + angleAdjust, PivotConstants.MIN_ANGLE_DEG, PivotConstants.MAX_ANGLE_DEG);

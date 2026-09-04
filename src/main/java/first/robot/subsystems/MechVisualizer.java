@@ -184,7 +184,7 @@ public class MechVisualizer {
 
     private Transform3d[] getTransforms() {
         Transform3d stage0 = new Transform3d(VisualizerConstants.STAGE0_ZERO, new Rotation3d(0, -Units.degreesToRadians(pivotLigament.getAngle()+90), 0));
-        Transform3d stage1 = stage0.plus(new Transform3d(carriageLigament.getLength()-Units.inchesToMeters(carriageOffset), 0, 0, Rotation3d.kZero));
+        Transform3d stage1 = stage0.plus(new Transform3d(carriageLigament.getLength()-Units.inchesToMeters(carriageOffset), 0, 0, Rotation3d.ZERO));
         Transform3d wrist = stage1.plus(new Transform3d(
                 VisualizerConstants.WRIST_OFFSET,
                 new Rotation3d(0, -Units.degreesToRadians(wristLigament1.getAngle()-wristOffset+55), 0)));

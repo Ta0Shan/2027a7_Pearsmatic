@@ -82,8 +82,8 @@ public class DriveCommands {
         linearMagnitude = linearMagnitude * linearMagnitude;
 
         // Return new linear velocity
-        return new Pose2d(Translation2d.kZero, linearDirection)
-        .transformBy(new Transform2d(linearMagnitude, 0.0, Rotation2d.kZero))
+        return new Pose2d(Translation2d.ZERO, linearDirection)
+        .transformBy(new Transform2d(linearMagnitude, 0.0, Rotation2d.ZERO))
         .getTranslation();
     }
 
@@ -210,7 +210,7 @@ public class DriveCommands {
                     new TrapezoidProfile.Constraints(driveMaxVel.get(), driveMaxAccel.get()));
             
             Translation2d error = goal.minus(drive.getPose()).getTranslation();
-            Rotation2d direction = error.getAngle();
+            Rotation2d direction = error.getAngle().get();
 
             ChassisVelocities currentVelocity = drive.getChassisVelocities();
             double velocityTowardsTarget = (currentVelocity.vx * direction.getCos()) + (currentVelocity.vy * direction.getSin());
@@ -223,7 +223,7 @@ public class DriveCommands {
             while(!driveController.atGoal() || !angleController.atGoal()) {
 
                 error = goal.minus(drive.getPose()).getTranslation();
-                direction = error.getAngle().plus(Rotation2d.k180deg);
+                direction = error.getAngle().get().plus(Rotation2d.PI);
                 // flipped because the direction of the error vector is opposite the direction of the necessary robot velocity vector
 
                 double twist = 
@@ -260,7 +260,7 @@ public class DriveCommands {
                 ? RedFieldConstants.CLASSIFIER_AIM_TARGET
                 : BlueFieldConstants.CLASSIFIER_AIM_TARGET;
                 
-                Rotation2d targetRotation = targetPose.minus(currentPose).getAngle().minus(Rotation2d.k180deg);
+                Rotation2d targetRotation = targetPose.minus(currentPose).getAngle().get().minus(Rotation2d.PI);
                 
                 co.await(goToPose(() -> new Pose2d(drive.getPose().getTranslation(), targetRotation)));
             }).named("ALIGN SHUTTLE");
@@ -297,7 +297,7 @@ public class DriveCommands {
 
                 Pose2d targetPose = drive.getPose().nearest(Arrays.asList(validGoals))
                     .plus(isFront ? FieldConstants.ALIGN_OFFSET_SHORT : FieldConstants.ALIGN_OFFSET_LONG)
-                    .plus(isFront ? new Transform2d() : new Transform2d(0, 0, Rotation2d.k180deg))
+                    .plus(isFront ? new Transform2d() : new Transform2d(0, 0, Rotation2d.PI))
                     ;
                 co.await(goToPose(() -> targetPose));
             }
@@ -324,7 +324,7 @@ public class DriveCommands {
                         RedFieldConstants.CLASSIFIER_CENTER
                         : BlueFieldConstants.CLASSIFIER_CENTER)
                         .plus(FieldConstants.ALIGN_OFFSET_SHORT)
-                        .plus(isFront ? new Transform2d() : new Transform2d(0, 0, Rotation2d.k180deg));
+                        .plus(isFront ? new Transform2d() : new Transform2d(0, 0, Rotation2d.PI));
             ;
             co.await(goToPose(() -> targetPose));
         }).named("CLASSIFIER ALIGN");
@@ -333,16 +333,24 @@ public class DriveCommands {
     public boolean isFront(Supplier<SuperstructureStates> state) {
         boolean isRed = DriverStationBackend.getAlliance().orElse(Alliance.RED) == Alliance.RED;
         boolean isClassifier = state.get() == SuperstructureStates.CLASSIFIER_FRONT || state.get() == SuperstructureStates.CLASSIFIER_BACK;
-        if (isRed) { // if isRed
-            if (isClassifier) {
-                return Math.abs(drive.getRotation().minus(RedFieldConstants.CLASSIFIER_CENTER.getTranslation().minus(drive.getPose().getTranslation()).getAngle()).getDegrees()) <= 90;
-            } // else isCave
-            return Math.abs(drive.getRotation().minus(RedFieldConstants.CAVE_CENTER.minus(drive.getPose().getTranslation()).getAngle()).getDegrees()) <= 90;
-        } // else isBlue
-        if (isClassifier) {
-            return Math.abs(drive.getRotation().minus(BlueFieldConstants.CLASSIFIER_CENTER.getTranslation().minus(drive.getPose().getTranslation()).getAngle()).getDegrees()) <= 90;
-        } // else isBlue && isCave
-        return Math.abs(drive.getRotation().minus(BlueFieldConstants.CAVE_CENTER.minus(drive.getPose().getTranslation()).getAngle()).getDegrees()) <= 90;
+
+        return isClassifier
+            ? isRed
+                ? Math.abs(drive.getRotation().minus(RedFieldConstants.CLASSIFIER_CENTER.getTranslation().minus(drive.getPose().getTranslation()).getAngle().get()).getDegrees()) <= 90
+                : Math.abs(drive.getRotation().minus(BlueFieldConstants.CLASSIFIER_CENTER.getTranslation().minus(drive.getPose().getTranslation()).getAngle().get()).getDegrees()) <= 90
+            : isRed
+                ? Math.abs(drive.getRotation().minus(RedFieldConstants.CAVE_CENTER.minus(drive.getPose().getTranslation()).getAngle().get()).getDegrees()) <= 90
+                : Math.abs(drive.getRotation().minus(BlueFieldConstants.CAVE_CENTER.minus(drive.getPose().getTranslation()).getAngle().get()).getDegrees()) <= 90;
+        // if (isRed) { // if isRed
+        //     if (isClassifier) {
+        //         return Math.abs(drive.getRotation().minus(RedFieldConstants.CLASSIFIER_CENTER.getTranslation().minus(drive.getPose().getTranslation()).getAngle()).getDegrees()) <= 90;
+        //     } // else isCave
+        //     return Math.abs(drive.getRotation().minus(RedFieldConstants.CAVE_CENTER.minus(drive.getPose().getTranslation()).getAngle()).getDegrees()) <= 90;
+        // } // else isBlue
+        // if (isClassifier) {
+        //     return Math.abs(drive.getRotation().minus(BlueFieldConstants.CLASSIFIER_CENTER.getTranslation().minus(drive.getPose().getTranslation()).getAngle()).getDegrees()) <= 90;
+        // } // else isBlue && isCave
+        // return Math.abs(drive.getRotation().minus(BlueFieldConstants.CAVE_CENTER.minus(drive.getPose().getTranslation()).getAngle()).getDegrees()) <= 90;
     }
 
     public Command driveCircle() {
@@ -350,7 +358,7 @@ public class DriveCommands {
             Rotation2d direction = Rotation2d.fromDegrees(1);
             Translation2d linearVelocity = new Translation2d(0.5, direction);
 
-            while(!direction.equals(Rotation2d.kZero)) {
+            while(!direction.equals(Rotation2d.ZERO)) {
                 ChassisVelocities velocity = new ChassisVelocities(
                     linearVelocity.getX(),
                     linearVelocity.getY(),
@@ -510,7 +518,7 @@ public class DriveCommands {
 
     private static class WheelRadiusCharacterizationState {
         double[] positions = new double[4];
-        Rotation2d lastAngle = Rotation2d.kZero;
+        Rotation2d lastAngle = Rotation2d.ZERO;
         double gyroDelta = 0.0;
     }
 }

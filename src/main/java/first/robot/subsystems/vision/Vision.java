@@ -20,11 +20,11 @@ import org.wpilib.math.geometry.Pose3d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.numbers.N1;
 import org.wpilib.math.numbers.N3;
-import org.wpilib.driverstation.Alert;
-import org.wpilib.driverstation.Alert.Level;
+import org.wpilib.util.Alert;
+import org.wpilib.util.Alert.Level;
 import org.wpilib.command3.Mechanism;
 
-public class Vision extends Mechanism {
+public class Vision implements Mechanism {
   private final VisionConsumer consumer;
   private final VisionIO[] io;
   private final VisionIOInputsAutoLogged[] inputs;

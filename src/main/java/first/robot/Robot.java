@@ -40,13 +40,15 @@ public class Robot extends LoggedRobot {
 
     problemCommands = new ArrayList<String>();
 
-    Logger.addDataReceiver(new NT4Publisher());
-    Logger.start();
+    
+
+    // Logger.addDataReceiver(new NT4Publisher());
+    // Logger.start();
 
     // Logger.recordOutput("Field/Origin", FieldConstants.ORIGIN);
-    // Logger.recordOutput("Field/Center", new Pose2d(FieldConstants.CENTER, Rotation2d.kZero));
+    // Logger.recordOutput("Field/Center", new Pose2d(FieldConstants.CENTER, Rotation2d.ZERO));
     
-    // Logger.recordOutput("Field/Blue/Cave Center", new Pose2d(BlueFieldConstants.CAVE_CENTER, Rotation2d.kZero));
+    // Logger.recordOutput("Field/Blue/Cave Center", new Pose2d(BlueFieldConstants.CAVE_CENTER, Rotation2d.ZERO));
     // Logger.recordOutput("Field/Blue/Lower Shaft Faces", BlueFieldConstants.LOWER_SHAFT_FACES);
     // Logger.recordOutput("Field/Blue/Upper Shaft Vertices", BlueFieldConstants.UPPER_SHAFT_VERTICES);
     // Logger.recordOutput("Field/Blue/Classifier", new Translation2d[] {BlueFieldConstants.CLASSIFIER_SOURCE_CORNER, BlueFieldConstants.CLASSIFIER_MINE_CORNER});

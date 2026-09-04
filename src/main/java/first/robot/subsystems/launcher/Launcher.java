@@ -8,7 +8,7 @@ import org.wpilib.command3.Mechanism;
 import first.robot.subsystems.launcher.LauncherConstants.LauncherStates;
 import first.robot.util.LoggedTunableNumber;
 
-public class Launcher extends Mechanism {
+public class Launcher implements Mechanism {
     private final LauncherIO io;
 
     @AutoLogOutput(key="Mechanisms/Launcher/State") private LauncherStates state = LauncherStates.OFF;
