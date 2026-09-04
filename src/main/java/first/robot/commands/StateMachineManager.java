@@ -95,7 +95,8 @@ public class StateMachineManager {
             State IDLING = stateMachine.addState(superstructure.hold());
 
             // alignment states / in-betweens
-            State SHUTTLE_ALIGN = stateMachine.addState(Command.parallel(superstructure.shuttle(drivetrain::getDistanceFromClassifier), drivetrain.shuttleAlign()).named("SHUTTLE"));
+            State SHUTTLE_ALIGN = stateMachine.addState(
+                Command.parallel(superstructure.shuttle(drivetrain::getDistanceFromClassifier), drivetrain.shuttleAlign()).named("SHUTTLE"));
             State COLORED_ALIGN = stateMachine.addState(drivetrain.align(superstructure::getSuperstructureState, superstructure::getCrystalColor));
             State NEUTRAL_ALIGN = stateMachine.addState(drivetrain.align(superstructure::getSuperstructureState));
 
