@@ -486,6 +486,7 @@ public class DriveCommands {
                             Rotation2d rotation = drive.getRotation();
                             state.gyroDelta += Math.abs(rotation.minus(state.lastAngle).getRadians());
                             state.lastAngle = rotation;
+                            co2.yield();
                         }
                     }).named("MEASURE ROTATION")
                 ).named("TURN IN PLACE")

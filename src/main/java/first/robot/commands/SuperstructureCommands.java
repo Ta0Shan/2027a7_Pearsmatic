@@ -34,8 +34,6 @@ public class SuperstructureCommands {
     private final InterpolatingDoubleTreeMap rpsLerp = new InterpolatingDoubleTreeMap();
     private final LoggedTunableNumber manualSetpoint = new LoggedTunableNumber("Launcher/Manual Setpoint", 30.0);
 
-    // private final Debouncer scoreDebouncer = new Debouncer(1, DebounceType.FALLING);
-
     // private final Drive drive;
 
     public SuperstructureCommands(Telescope telescope, Launcher launcher, EE endEffector) {
@@ -51,7 +49,7 @@ public class SuperstructureCommands {
     }
 
     public Command pause(double seconds) {
-        return Command.noRequirements(co -> {co.wait(Seconds.of(seconds));}).named("WAIT");
+        return Command.noRequirements(co -> {co.wait(Seconds.of(seconds));}).named("WAIT " + seconds + "s");
     }
     
     public Command instantApplyState(SuperstructureStates state) {
