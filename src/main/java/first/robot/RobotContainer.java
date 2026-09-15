@@ -8,11 +8,11 @@ import java.util.ArrayList;
 
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Trigger;
-import org.wpilib.command3.button.CommandNiDsXboxController;
+import org.wpilib.command3.button.CommandXboxController;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
-import org.wpilib.smartdashboard.SendableChooser;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.telemetry.Telemetry;
+import org.wpilib.tunable.Selectable;
 
 import first.robot.Constants.CrystalColor;
 import first.robot.Constants.Mode;
@@ -46,12 +46,12 @@ import first.robot.util.PhoenixUtil;
 
 public class RobotContainer {
 
-  public final CommandNiDsXboxController driver;
-  public final CommandNiDsXboxController operator;
-  public final CommandNiDsXboxController keyboard;
+  public final CommandXboxController driver;
+  public final CommandXboxController operator;
+  public final CommandXboxController keyboard;
   private ArrayList<Trigger> boundTriggers;
 
-  private final SendableChooser<Command> autoChooser;
+  private final Selectable<Command> autoChooser;
 
   private final Drive drive;
 
@@ -66,12 +66,12 @@ public class RobotContainer {
   private final MechVisualizer visualizer2d;
 
   public RobotContainer() {
-    driver = new CommandNiDsXboxController(0);
-    operator = new CommandNiDsXboxController(1);
-    keyboard = new CommandNiDsXboxController(4);
+    driver = new CommandXboxController(0);
+    operator = new CommandXboxController(1);
+    keyboard = new CommandXboxController(4);
     boundTriggers = new ArrayList<Trigger>();
 
-    autoChooser = new SendableChooser<>();
+    autoChooser = new Selectable<>();
 
     switch(Constants.currentMode) {
       case REAL:
@@ -134,7 +134,7 @@ public class RobotContainer {
       driver.x(),
       driver.y(),
       driver.a(),
-      driver.povUp(),
+      driver.dpadUp(),
       driver.rightBumper(),
       driver.rightTrigger(0.9)
     );
@@ -146,8 +146,12 @@ public class RobotContainer {
 
   public void setUpAutonomousCommand() {
     // autoChooser.addOption("Auto Name", new PathPlannerAuto("Auto Nickname", bool inversion));
+    autoChooser.addDefault("Auto 1", null);
+    autoChooser.add("Auto 2", null);
 
-    SmartDashboard.putData("Autonomous Command", autoChooser);
+    Telemetry.log("Autonomous Command", autoChooser);
+
+    // SmartDashboard.putData("Autonomous Command", autoChooser);
   }
 
   private void bind(Trigger trigger) {
@@ -156,7 +160,7 @@ public class RobotContainer {
 
   public void teleopBindings() {
     // all direct robot controls are bound in the state machine already
-    bind(driver.start().onTrue(Command.requiring(drive).executing(co -> {
+    bind(driver.menu().onTrue(Command.requiring(drive).executing(co -> {
       drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d()));
     }).named("RESET HEADING")));
 
@@ -174,19 +178,19 @@ public class RobotContainer {
     Trigger operatorRightYDown = new Trigger(() -> operator.getRightY() > 0.9);
     bind(operatorRightYDown.whileTrue(telescope.adjustExtensionIn(-1.5 / Constants.LOOP_FREQ_HZ)));
 
-    bind(operator.povUp().whileTrue(endEffector.adjustAngleDeg(10 / Constants.LOOP_FREQ_HZ)));
-    bind(operator.povDown().whileTrue(endEffector.adjustAngleDeg(-10 / Constants.LOOP_FREQ_HZ)));
-    bind(operator.povRight().whileTrue(endEffector.adjustVoltage(0.5 / Constants.LOOP_FREQ_HZ)));
-    bind(operator.povLeft().whileTrue(endEffector.adjustVoltage(-0.5 / Constants.LOOP_FREQ_HZ)));
+    bind(operator.dpadUp().whileTrue(endEffector.adjustAngleDeg(10 / Constants.LOOP_FREQ_HZ)));
+    bind(operator.dpadDown().whileTrue(endEffector.adjustAngleDeg(-10 / Constants.LOOP_FREQ_HZ)));
+    bind(operator.dpadRight().whileTrue(endEffector.adjustVoltage(0.5 / Constants.LOOP_FREQ_HZ)));
+    bind(operator.dpadLeft().whileTrue(endEffector.adjustVoltage(-0.5 / Constants.LOOP_FREQ_HZ)));
 
     bind(operator.rightBumper().whileTrue(launcher.adjustRPS(1 / Constants.LOOP_FREQ_HZ)));
     bind(operator.leftBumper().whileTrue(launcher.adjustRPS(-1 / Constants.LOOP_FREQ_HZ)));
   }
 
   public void utilityBindings() {
-    bind(operator.start().toggleOnTrue(SMManager.functional()));
-    bind(operator.back().toggleOnTrue(SMManager.tuning()));
-    bind(driver.back().toggleOnTrue(SMManager.teleop()));
+    bind(operator.menu().toggleOnTrue(SMManager.functional()));
+    bind(operator.view().toggleOnTrue(SMManager.tuning()));
+    bind(driver.view().toggleOnTrue(SMManager.teleop()));
   }
 
   public void colorChangeBindings() {

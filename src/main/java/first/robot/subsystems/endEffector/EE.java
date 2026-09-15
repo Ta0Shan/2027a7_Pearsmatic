@@ -6,6 +6,9 @@ import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.math.filter.Debouncer;
 import org.wpilib.math.util.Units;
+import org.wpilib.telemetry.Telemetry;
+import org.wpilib.tunable.TunableDouble;
+import org.wpilib.tunable.Tunables;
 
 import first.robot.subsystems.endEffector.EEConstants.WristStates;
 import first.robot.util.LoggedTunableNumber;
@@ -32,8 +35,14 @@ public class EE implements Mechanism {
 
     private RollerStates rollerState = RollerStates.IDLE;
 
+    private final TunableDouble angleTuner = TunableDouble.create(0.0);
+    private final TunableDouble voltageTuner = TunableDouble.create(0.0);
+
     public EE(EEIO io) {
         this.io = io;
+
+        Tunables.publish("Wrist tunable setpoint", angleTuner);
+        Tunables.publish("Rollers tunable setpoint", voltageTuner);
     }
 
     public void logIO() {
@@ -50,6 +59,22 @@ public class EE implements Mechanism {
         Logger.recordOutput("Mechanisms/End Effector/Rollers/Voltage", inputs.rollerData.appliedVolts());
         Logger.recordOutput("Mechanisms/End Effector/Rollers/RPS", getRollersRPS());
         Logger.recordOutput("Mechanisms/End Effector/Rollers/Surface Speed MPS", getRollersRPS() * EEConstants.ROLLER_CIRCUMF_METERS);
+
+
+        Telemetry.log("Mechanisms/Wrist/State", wristState.name());
+        Telemetry.log("Mechanisms/Wrist/Crystal", crystalColor().name());
+        Telemetry.log("Mechanisms/Wrist/Raw Setpoint", rawAngle);
+        Telemetry.log("Mechanisms/Wrist/Adjust", angleAdjust);
+        Telemetry.log("Mechanisms/Wrist/True Setpoint Deg", trueAngle);
+        Telemetry.log("Mechanisms/Wrist/Angle Deg", getWristAngleDeg());
+
+        Telemetry.log("Mechanisms/Rollers/State", rollerState.name());
+        Telemetry.log("Mechanisms/Rollers/Raw Setpoint", rawVoltage);
+        Telemetry.log("Mechanisms/Rollers/Adjust", voltageAdjust);
+        Telemetry.log("Mechanisms/Rollers/True Setpoint V", trueVoltage);
+        Telemetry.log("Mechanisms/Rollers/Voltage", inputs.rollerData.appliedVolts());
+        Telemetry.log("Mechanisms/Rollers/RPS", getRollersRPS());
+        Telemetry.log("Mechanisms/Rollers/Surface Speed MPS", getRollersRPS() * EEConstants.ROLLER_CIRCUMF_METERS);
     }
 
     public Command applyState(WristStates wristState, RollerStates rollerState) {
@@ -76,8 +101,10 @@ public class EE implements Mechanism {
             // tuning logic, will not complete naturally
             else {
                 while(true) {
-                    if (tunableAngle.hasChanged(tunableAngle.hashCode())) rawAngle = tunableAngle.get();
-                    if (tunableVoltage.hasChanged(tunableVoltage.hashCode())) rawVoltage = tunableVoltage.get();
+                    // if (tunableAngle.hasChanged(tunableAngle.hashCode())) rawAngle = tunableAngle.get();
+                    // if (tunableVoltage.hasChanged(tunableVoltage.hashCode())) rawVoltage = tunableVoltage.get();
+                    if(angleTuner.hasChanged()) rawAngle = angleTuner.get();
+                    if(voltageTuner.hasChanged()) rawVoltage = voltageTuner.get();
                     trueAngle = Math.clamp(rawAngle + angleAdjust, EEConstants.MIN_ANGLE_DEG, EEConstants.MAX_ANGLE_DEG);
                     trueVoltage = (Math.clamp(rawVoltage + voltageAdjust, -12, 12));
                     io.setWristAngleDeg(trueAngle);

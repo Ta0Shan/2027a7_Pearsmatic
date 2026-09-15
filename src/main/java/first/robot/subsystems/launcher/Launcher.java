@@ -4,6 +4,10 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
+import org.wpilib.telemetry.Telemetry;
+import org.wpilib.tunable.Tunable;
+import org.wpilib.tunable.TunableDouble;
+import org.wpilib.tunable.Tunables;
 
 import first.robot.subsystems.launcher.LauncherConstants.LauncherStates;
 import first.robot.util.LoggedTunableNumber;
@@ -23,8 +27,12 @@ public class Launcher implements Mechanism {
 
     private final LauncherIOInputsAutoLogged inputs = new LauncherIOInputsAutoLogged();
 
+    private final TunableDouble rpsTuner = TunableDouble.create(0.0);
+
     public Launcher(LauncherIO io) {
         this.io = io;
+
+        Tunables.publish("Launcher tunable RPS", rpsTuner);
     }
 
     public void logIO() {
@@ -48,6 +56,26 @@ public class Launcher implements Mechanism {
         Logger.recordOutput("Mechanisms/Launcher/Error/Raw RPS", meanRPSTarget - getMeanRPS());
         Logger.recordOutput("Mechanisms/Launcher/Error/Percent", Math.abs(meanRPSTarget != 0 ? (meanRPSTarget - getMeanRPS()) / meanRPSTarget : 0) * 100);
         // Logger.recordOutput("Mechanisms/Launcher/Error/Minimum Percent", minimumErrorPercent);
+
+        Telemetry.log("Mechanisms/Launcher/Raw Setpoint", rawMeanTarget);
+        Telemetry.log("Mechanisms/Launcher/Adjust", adjust);
+        Telemetry.log("Mechanisms/Launcher/True Setpoint RPS", meanRPSTarget);
+        Telemetry.log("Mechanisms/Launcher/Mean RPS", getMeanRPS());
+
+        Telemetry.log("Mechanisms/Launcher/Error/Raw", meanRPSTarget - getMeanRPS());
+        Telemetry.log("Mechanisms/Launcher/Error/Percent", Math.abs(meanRPSTarget != 0 ? (meanRPSTarget - getMeanRPS()) / meanRPSTarget : 0) * 100);
+
+        Telemetry.log("Mechanisms/Launcher/Left/Setpoint RPS",
+            (meanRPSTarget == 0 ? 0 : ((meanRPSTarget * LauncherConstants.REDUCTION) + (LauncherConstants.RPS_DIFFERENCE / 2)) / LauncherConstants.REDUCTION));
+        Telemetry.log("Mechanisms/Launcher/Left/RPS", inputs.launcher1Data.velocity() / LauncherConstants.REDUCTION);
+        Telemetry.log("Mechanisms/Launcher/Left/Surface Speed MPS", inputs.launcher1Data.velocity() / LauncherConstants.REDUCTION * LauncherConstants.FLYWHEEL_CIRCUMF_METERS);
+
+        Telemetry.log("Mechanisms/Launcher/Right/Setpoint RPS",
+            (meanRPSTarget == 0 ? 0 : ((meanRPSTarget * LauncherConstants.REDUCTION) - (LauncherConstants.RPS_DIFFERENCE / 2)) / LauncherConstants.REDUCTION));
+        Telemetry.log("Mechanisms/Launcher/Right/RPS", inputs.launcher2Data.velocity() / LauncherConstants.REDUCTION);
+        Telemetry.log("Mechanisms/Launcher/Right/Surface Speed MPS", inputs.launcher2Data.velocity() / LauncherConstants.REDUCTION * LauncherConstants.FLYWHEEL_CIRCUMF_METERS);
+
+
     }
 
     public Command setLauncherRPS(double RPS) { // should NOT be called when in TUNING state
@@ -77,7 +105,8 @@ public class Launcher implements Mechanism {
             if(state == LauncherStates.TUNING) {
                 co.fork(setScoringState(state));
                 while(true) {
-                    if (tunableRPS.hasChanged(tunableRPS.hashCode())) rawMeanTarget = tunableRPS.get();
+                    // if (tunableRPS.hasChanged(tunableRPS.hashCode())) rawMeanTarget = tunableRPS.get();
+                    if(rpsTuner.hasChanged()) rawMeanTarget = rpsTuner.get();
                     meanRPSTarget = Math.clamp(rawMeanTarget + adjust, -LauncherConstants.FLYWHEEL_MAX_SPEED_RPS, LauncherConstants.FLYWHEEL_MAX_SPEED_RPS);
                     io.setLauncherRPS(meanRPSTarget);
                 }
