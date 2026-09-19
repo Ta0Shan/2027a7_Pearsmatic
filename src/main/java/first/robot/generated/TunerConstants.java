@@ -10,6 +10,7 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants.*;
 
 import static org.wpilib.units.Units.*;
 
+import org.wpilib.hardware.bus.CANPort;
 import org.wpilib.math.linalg.Matrix;
 import org.wpilib.math.numbers.N1;
 import org.wpilib.math.numbers.N3;
@@ -90,7 +91,8 @@ public class TunerConstants {
   // CAN bus that the devices are located on;
   // All swerve devices must share the same CAN bus
 //   public static final CANBus kCANBus = new CANBus("Drivetrain", "./logs/example.hoot");
-  public static final CANBus kCANBus = CANBus.systemcore(0);
+  public static final CANPort kCANPort = CANPort.CAN_S0;
+  public static final CANBus kCANBus = new CANBus(kCANPort);
 
   // Theoretical free speed (m/s) at 12 V applied output;
   // This needs to be tuned to your individual robot
@@ -118,7 +120,8 @@ public class TunerConstants {
 
   public static final SwerveDrivetrainConstants DrivetrainConstants =
       new SwerveDrivetrainConstants()
-          .withCANBusName(kCANBus.getName())
+        //   .withCANBusName(kCANBus.getName())
+          .withNetwork(kCANBus)
           .withPigeon2Id(kPigeonId)
           .withPigeon2Configs(pigeonConfigs);
 

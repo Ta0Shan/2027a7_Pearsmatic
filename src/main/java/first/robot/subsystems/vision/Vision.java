@@ -45,7 +45,9 @@ public class Vision implements Mechanism {
     for (int i = 0; i < inputs.length; i++) {
       disconnectedAlerts[i] =
           new Alert(
-              "Vision camera " + Integer.toString(i) + " is disconnected.", Level.HIGH);
+              "CameraDisconnect",
+              "Vision camera " + Integer.toString(i) + " is disconnected.",
+              Level.HIGH);
     }
   }
 

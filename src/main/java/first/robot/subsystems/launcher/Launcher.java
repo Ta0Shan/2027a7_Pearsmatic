@@ -109,6 +109,7 @@ public class Launcher implements Mechanism {
                     if(rpsTuner.hasChanged()) rawMeanTarget = rpsTuner.get();
                     meanRPSTarget = Math.clamp(rawMeanTarget + adjust, -LauncherConstants.FLYWHEEL_MAX_SPEED_RPS, LauncherConstants.FLYWHEEL_MAX_SPEED_RPS);
                     io.setLauncherRPS(meanRPSTarget);
+                    co.yield();
                 }
             }
         }).named("LAUNCHER " + state);

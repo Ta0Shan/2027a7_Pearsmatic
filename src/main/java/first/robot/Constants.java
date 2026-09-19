@@ -3,6 +3,7 @@ package first.robot;
 import java.util.ArrayList;
 
 import org.wpilib.framework.RobotBase;
+import org.wpilib.hardware.bus.CANPort;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Transform2d;
@@ -28,7 +29,9 @@ public class Constants {
     public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
     // public static final Mode currentMode = simMode;
 
-    public static final CANBus SUPERSTRUCTURE_CAN_BUS = CANBus.systemcore(4);
+    public static final CANPort SUPERSTRUCTURE_CAN_PORT = CANPort.CAN_S2;
+    public static final CANBus SUPERSTRUCTURE_CAN_BUS = new CANBus(SUPERSTRUCTURE_CAN_PORT);
+
     public static final double LOOP_FREQ_HZ = 50;
     public static final double LOOP_PERIOD_SEC = 1 / LOOP_FREQ_HZ;
 

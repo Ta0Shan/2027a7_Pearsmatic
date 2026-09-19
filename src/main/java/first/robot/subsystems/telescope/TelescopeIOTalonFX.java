@@ -71,7 +71,7 @@ public abstract class TelescopeIOTalonFX implements TelescopeIO {
             ArmConstants.CONFIG(),
             Subsystem.TELESCOPE_EXTENSION);
 
-        armHub = new ServoHub(0, ArmConstants.SERVO_HUB_ID);
+        armHub = new ServoHub(Constants.SUPERSTRUCTURE_CAN_PORT, ArmConstants.SERVO_HUB_ID);
 
         armServo = armHub.getServoChannel(ChannelId.kChannelId0);
 

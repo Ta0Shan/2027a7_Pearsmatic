@@ -9,17 +9,18 @@ package first.robot.subsystems.drive;
 
 import static org.wpilib.units.Units.*;
 
-import com.pathplanner.lib.auto.AutoBuilder; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they add a version for cmdv3 somehow
-import com.pathplanner.lib.config.ModuleConfig;
-import com.pathplanner.lib.config.PIDConstants; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they add a version for cmdv3 somehow
-import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they add a version for cmdv3 somehow
-import com.pathplanner.lib.pathfinding.Pathfinding;
-import com.pathplanner.lib.util.PathPlannerLogging;
+// TODO: no pathplanner vendordep yet, wait until
+// import com.pathplanner.lib.auto.AutoBuilder; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they add a version for cmdv3 somehow
+// import com.pathplanner.lib.config.ModuleConfig;
+// import com.pathplanner.lib.config.PIDConstants; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they add a version for cmdv3 somehow
+// import com.pathplanner.lib.config.RobotConfig;
+// import com.pathplanner.lib.controllers.PPHolonomicDriveController; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they add a version for cmdv3 somehow
+// import com.pathplanner.lib.pathfinding.Pathfinding;
+// import com.pathplanner.lib.util.PathPlannerLogging;
 import first.robot.Constants;
 import first.robot.Constants.Mode;
 import first.robot.generated.TunerConstants;
-import first.robot.util.LocalADStarAK;
+// import first.robot.util.LocalADStarAK;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -82,7 +83,7 @@ public class Drive implements Mechanism {
   private final Module[] modules = new Module[4]; // FL, FR, BL, BR
   // private final SysIdRoutine sysId;
   private final Alert gyroDisconnectedAlert =
-      new Alert("Disconnected gyro, using kinematics as fallback.", Level.HIGH);
+      new Alert("GyroDisconnect","Disconnected gyro, using kinematics as fallback.", Level.HIGH);
 
   private SwerveDriveKinematics kinematics = new SwerveDriveKinematics(getModuleTranslations());
   private Rotation2d rawGyroRotation = Rotation2d.ZERO;
@@ -125,15 +126,15 @@ public class Drive implements Mechanism {
     //     PP_CONFIG,
     //     () -> DriverStationBackend.getAlliance().orElse(Alliance.BLUE) == Alliance.RED,
     //     this);
-    Pathfinding.setPathfinder(new LocalADStarAK());
-    PathPlannerLogging.setLogActivePathCallback(
-        (activePath) -> {
-          Logger.recordOutput("Odometry/Trajectory", activePath.toArray(new Pose2d[0]));
-        });
-    PathPlannerLogging.setLogTargetPoseCallback(
-        (targetPose) -> {
-          Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
-        });
+    // Pathfinding.setPathfinder(new LocalADStarAK());
+    // PathPlannerLogging.setLogActivePathCallback(
+    //     (activePath) -> {
+    //       Logger.recordOutput("Odometry/Trajectory", activePath.toArray(new Pose2d[0]));
+    //     });
+    // PathPlannerLogging.setLogTargetPoseCallback(
+    //     (targetPose) -> {
+    //       Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
+    //     });
 
     // Configure SysId
     // sysId =
