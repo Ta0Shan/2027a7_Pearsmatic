@@ -39,6 +39,7 @@ import org.wpilib.math.kinematics.SwerveModuleVelocity;
 import org.wpilib.math.numbers.N1;
 import org.wpilib.math.numbers.N3;
 import org.wpilib.math.system.DCMotor;
+import org.wpilib.telemetry.Telemetry;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.command3.Command; // sysId doesn't exist in cmdv3 so all the commands to run sysId are commented out, hopefully they add sysId or a replacement
 import org.wpilib.util.Alert;
@@ -168,6 +169,8 @@ public class Drive implements Mechanism {
     if (DriverStationBackend.isDisabled()) {
       Logger.recordOutput("SwerveVelocities/Setpoints", new SwerveModuleVelocity[] {});
       Logger.recordOutput("SwerveVelocities/SetpointsOptimized", new SwerveModuleVelocity[] {});
+      Telemetry.log("SwerveVelocities/Setpoints", new SwerveModuleVelocity[] {});
+      Telemetry.log("SwerveVelocities/SetpointsOptimized", new SwerveModuleVelocity[] {});
     }
 
     // Update odometry
@@ -220,6 +223,8 @@ public class Drive implements Mechanism {
       // Log unoptimized setpoints and setpoint speeds
       Logger.recordOutput("SwerveVelocities/Setpoints", desaturatedVelocities);
       Logger.recordOutput("SwerveChassisVelocities/Setpoints", discreteSpeeds);
+      Telemetry.log("SwerveVelocities/Setpoints", desaturatedVelocities);
+      Telemetry.log("SwerveChassisVelocities/Setpoints", discreteSpeeds);
 
       // Send setpoints to modules
       for (int i = 0; i < 4; i++) {
@@ -228,6 +233,7 @@ public class Drive implements Mechanism {
 
       // Log optimized setpoints (runSetpoint mutates each state)
       Logger.recordOutput("SwerveVelocities/SetpointsOptimized", setpointVelocities);
+      Telemetry.log("SwerveVelocities/SetpointsOptimized", setpointVelocities);
   }
 
   /** Runs the drive in a straight line with the specified drive output. */

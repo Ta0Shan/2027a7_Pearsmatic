@@ -124,7 +124,7 @@ public class Constants {
         public static final double MINE_PILLAR_LENGTH = Units.inchesToMeters(12.0);
 
         public static final Pose2d ORIGIN = new Pose2d();
-        public static final Translation2d CENTER = ORIGIN.getTranslation();
+        public static final Translation2d CENTER = ORIGIN.getTranslation();//.plus(new Translation2d(FIELD_LENGTH/2, FIELD_WIDTH/2));
         // CENTER-RED field orientation (red on left side):
             // +x = right, -x = left
             // +y = up, -y = down

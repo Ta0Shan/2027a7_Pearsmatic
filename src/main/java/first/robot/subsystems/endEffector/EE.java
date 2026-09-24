@@ -26,12 +26,12 @@ public class EE implements Mechanism {
     @AutoLogOutput(key="Mechanisms/End Effector/Wrist/Raw Setpoint") private double rawAngle = 0.0;
     @AutoLogOutput(key="Mechanisms/End Effector/Wrist/Adjust") private double angleAdjust = 0.0;
     @AutoLogOutput(key="Mechanisms/End Effector/Wrist/True Setpoint") private double trueAngle = 0.0;
-    private final LoggedTunableNumber tunableAngle = new LoggedTunableNumber("End Effector/Wrist/Angle Setpoint Deg", 0.0);
+    // private final LoggedTunableNumber tunableAngle = new LoggedTunableNumber("End Effector/Wrist/Angle Setpoint Deg", 0.0);
     
     @AutoLogOutput(key="Mechanisms/End Effector/Rollers/Raw Setpoint") private double rawVoltage = 0.0;
     @AutoLogOutput(key="Mechanisms/End Effector/Rollers/Adjust") private double voltageAdjust = 0.0;
     @AutoLogOutput(key="Mechanisms/End Effector/Rollers/True Setpoint") private double trueVoltage = 0.0;
-    private final LoggedTunableNumber tunableVoltage = new LoggedTunableNumber("End Effector/Rollers/Voltage Setpoint", 0.0);
+    // private final LoggedTunableNumber tunableVoltage = new LoggedTunableNumber("End Effector/Rollers/Voltage Setpoint", 0.0);
 
     private RollerStates rollerState = RollerStates.IDLE;
 

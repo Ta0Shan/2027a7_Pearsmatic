@@ -32,7 +32,6 @@ public class SuperstructureCommands {
     private SuperstructureStates superstructureState = SuperstructureStates.HOME;
 
     private final InterpolatingDoubleTreeMap rpsLerp = new InterpolatingDoubleTreeMap();
-    private final LoggedTunableNumber manualSetpoint = new LoggedTunableNumber("Launcher/Manual Setpoint", 30.0);
 
     // private final Drive drive;
 
@@ -76,7 +75,7 @@ public class SuperstructureCommands {
                 launcher.setLauncherRPS(
                     launcher.getState() == LauncherStates.SELF_DIRECTING
                     ? rpsLerp.get(distance.get())
-                    : manualSetpoint.get()
+                    : launcher.getManualRPS()
                 )
             );
         }).named("SHUTTLE");

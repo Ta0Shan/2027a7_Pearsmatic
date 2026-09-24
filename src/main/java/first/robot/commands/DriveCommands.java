@@ -20,6 +20,9 @@ import org.wpilib.math.util.Units;
 import org.wpilib.driverstation.internal.DriverStationBackend;
 import org.wpilib.driverstation.Alliance;
 import org.wpilib.system.Timer;
+import org.wpilib.tunable.Tunable;
+import org.wpilib.tunable.TunableDouble;
+import org.wpilib.tunable.Tunables;
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.command3.Command;
 
@@ -45,25 +48,25 @@ public class DriveCommands {
     private final Drive drive;
 
     private static final double DEADBAND = 0.1;
-    // private static final double ANGLE_KP = 7.0;
-    // private static final double ANGLE_KD = 0.4;
-    // private static final double ANGLE_MAX_VELOCITY = Units.degreesToRadians(360);
-    // private static final double ANGLE_MAX_ACCELERATION = Units.degreesToRadians(720);
-    private final LoggedTunableNumber anglekP = new LoggedTunableNumber("Align/Angle/kP", 7.0);
-    private final LoggedTunableNumber anglekD = new LoggedTunableNumber("Align/Angle/kD", 0.4);
-    private final LoggedTunableNumber angleMaxVel = new LoggedTunableNumber("Align/Angle/Max Velocity Deg", 360.0);
-    private final LoggedTunableNumber angleMaxAccel = new LoggedTunableNumber("Align/Angle/Max Acceleration Deg", 720.0);
-    
-    // private static final double DRIVE_kP = 7.0;
-    // private static final double DRIVE_kD = 0.4;
-    // private static final double DRIVE_MAX_VELOCITY = 4.0; // m/s
-    // private static final double DRIVE_MAX_ACCELERATION = 10.0; // m/s/s
-    private final LoggedTunableNumber drivekP = new LoggedTunableNumber("Align/Drive/kP", 7.0);
-    private final LoggedTunableNumber drivekD = new LoggedTunableNumber("Align/Drive/kD", 0.4);
-    private final LoggedTunableNumber driveMaxVel = new LoggedTunableNumber("Align/Drive/Max Velocity m/s", 4.0);
-    private final LoggedTunableNumber driveMaxAccel = new LoggedTunableNumber("Align/Drive/Max Acceleration m/s/s", 10.0);
 
-    // Characterization has been commented because sim is ideal and ideally everything works
+    // private final LoggedTunableNumber anglekP = new LoggedTunableNumber("Align/Angle/kP", 7.0);
+    // private final LoggedTunableNumber anglekD = new LoggedTunableNumber("Align/Angle/kD", 0.4);
+    // private final LoggedTunableNumber angleMaxVel = new LoggedTunableNumber("Align/Angle/Max Velocity Deg", 360.0);
+    // private final LoggedTunableNumber angleMaxAccel = new LoggedTunableNumber("Align/Angle/Max Acceleration Deg", 720.0);
+    private final TunableDouble anglekP = TunableDouble.create(7.0);
+    private final TunableDouble anglekD = TunableDouble.create(0.4);
+    private final TunableDouble angleMaxVel = TunableDouble.create(360); // deg/s
+    private final TunableDouble angleMaxAccel = TunableDouble.create(720); // deg/s/s
+    
+    // private final LoggedTunableNumber drivekP = new LoggedTunableNumber("Align/Drive/kP", 7.0);
+    // private final LoggedTunableNumber drivekD = new LoggedTunableNumber("Align/Drive/kD", 0.4);
+    // private final LoggedTunableNumber driveMaxVel = new LoggedTunableNumber("Align/Drive/Max Velocity m/s", 4.0);
+    // private final LoggedTunableNumber driveMaxAccel = new LoggedTunableNumber("Align/Drive/Max Acceleration m/s/s", 10.0);
+    private final TunableDouble drivekP = TunableDouble.create(7.0);
+    private final TunableDouble drivekD = TunableDouble.create(0.4);
+    private final TunableDouble driveMaxVel = TunableDouble.create(4.0); // m/s
+    private final TunableDouble driveMaxAccel = TunableDouble.create(10.0); // m/s/s
+
     private static final double FF_START_DELAY = 2.0; // Secs
     private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
     private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
@@ -71,6 +74,16 @@ public class DriveCommands {
 
     public DriveCommands(Drive drive) {
         this.drive = drive;
+
+        Tunables.publish("Align/Angle/kP", anglekP);
+        Tunables.publish("Align/Angle/kD", anglekD);
+        Tunables.publish("Align/Angle/Max Velocity dps", angleMaxVel);
+        Tunables.publish("Align/Angle/Max Acceleration dps^2", angleMaxAccel);
+
+        Tunables.publish("Align/Drive/kP", drivekP);
+        Tunables.publish("Align/Drive/kD", drivekD);
+        Tunables.publish("Align/Drive/Max Velocity mps", driveMaxVel);
+        Tunables.publish("Align/Drive/Max Acceleration mps^2", driveMaxAccel);
     }
 
     private static Translation2d getLinearVelocityFromJoysticks(double x, double y) {

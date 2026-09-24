@@ -8,6 +8,7 @@ import org.wpilib.math.geometry.Rotation3d;
 import org.wpilib.math.geometry.Transform3d;
 import org.wpilib.math.geometry.Translation3d;
 import org.wpilib.math.util.Units;
+import org.wpilib.telemetry.Telemetry;
 import org.wpilib.util.Color;
 import org.wpilib.util.Color8Bit;
 
@@ -155,6 +156,8 @@ public class MechVisualizer {
         updateMech(pivotAngleDegs, armExtensionInches, wristAngleDegs, launcherRPS, rollersRPS);
         Logger.recordOutput("Simulation/2d Visualizer", mech);
         Logger.recordOutput("Simulation/3d Components", getTransforms());
+        Telemetry.log("Simulation/2d Visualizer", mech);
+        Telemetry.log("Simulation/3d Transforms", getTransforms());
     }
 
     private void updateMech(double pivotAngleDegs,

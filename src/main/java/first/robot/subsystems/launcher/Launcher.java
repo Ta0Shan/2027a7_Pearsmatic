@@ -21,17 +21,19 @@ public class Launcher implements Mechanism {
     @AutoLogOutput(key="Mechanisms/Launcher/Raw Target") private double rawMeanTarget = 0.0;
     @AutoLogOutput(key="Mechanisms/Launcher/Adjust") private double adjust = 0.0;
     @AutoLogOutput(key="Mechanisms/Launcher/True RPS Target") private double meanRPSTarget = 0.0;
-    private final LoggedTunableNumber tunableRPS = new LoggedTunableNumber("Launcher/RPS Setpoint", 0.0);
+    // private final LoggedTunableNumber tunableRPS = new LoggedTunableNumber("Launcher/RPS Setpoint", 0.0);
 
     @AutoLogOutput(key="Mechanisms/Launcher/Error/Minimum Percent") private double minimumErrorPercent = 0.0;
 
     private final LauncherIOInputsAutoLogged inputs = new LauncherIOInputsAutoLogged();
 
+    private final TunableDouble manualSetpoint = TunableDouble.create(20.0);
     private final TunableDouble rpsTuner = TunableDouble.create(0.0);
 
     public Launcher(LauncherIO io) {
         this.io = io;
 
+        Tunables.publish("Launcher manual setpoint RPS", manualSetpoint);
         Tunables.publish("Launcher tunable RPS", rpsTuner);
     }
 
@@ -135,6 +137,10 @@ public class Launcher implements Mechanism {
 
     public LauncherStates getScoringState() {
         return scoringState;
+    }
+
+    public double getManualRPS() {
+        return manualSetpoint.get();
     }
 
     public double getMeanRPS() {

@@ -29,19 +29,20 @@ public class Telescope implements Mechanism {
 
     private final TelescopeIOInputsAutoLogged inputs = new TelescopeIOInputsAutoLogged();
 
-    @AutoLogOutput(key="Mechanisms/Telescope/State") private TelescopeStates state = TelescopeStates.HOME;
+    // @AutoLogOutput(key="Mechanisms/Telescope/State")
+    private TelescopeStates state = TelescopeStates.HOME;
 
     @AutoLogOutput(key="Mechanisms/Telescope/Arm/In Climb Sequence") private boolean isClimbing = false;
     
     @AutoLogOutput(key="Mechanisms/Telescope/Pivot/Raw Setpoint") private double rawAngle = 0.0;
     @AutoLogOutput(key="Mechanisms/Telescope/Pivot/Adjust") private double angleAdjust = 0.0;
     @AutoLogOutput(key="Mechanisms/Telescope/Pivot/True Setpoint") private double trueAngle = 0.0;
-    private final LoggedTunableNumber tunableAngle = new LoggedTunableNumber("Telescope/Pivot/Angle Setpoint Deg", 0.0);
+    // private final LoggedTunableNumber tunableAngle = new LoggedTunableNumber("Telescope/Pivot/Angle Setpoint Deg", 0.0);
     
     @AutoLogOutput(key="Mechanisms/Telescope/Arm/Raw Setpoint") private double rawExtension = 0.0;
     @AutoLogOutput(key="Mechanisms/Telescope/Arm/Adjust") private double extensionAdjust = 0.0;
     @AutoLogOutput(key="Mechanisms/Telescope/Arm/True Setpoint") private double trueExtension = 0.0;
-    private final LoggedTunableNumber tunableExtension = new LoggedTunableNumber("Telescope/Arm/Extension Setpoint In", 0.0);
+    // private final LoggedTunableNumber tunableExtension = new LoggedTunableNumber("Telescope/Arm/Extension Setpoint In", 0.0);
 
     private final TunableDouble angleTuner = TunableDouble.create(0.0);
     private final TunableDouble extensionTuner = TunableDouble.create(0.0);

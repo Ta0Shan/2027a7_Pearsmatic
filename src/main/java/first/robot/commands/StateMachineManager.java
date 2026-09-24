@@ -10,6 +10,7 @@ import org.littletonrobotics.junction.Logger;
 import org.wpilib.command3.Command;
 import org.wpilib.command3.StateMachine;
 import org.wpilib.command3.StateMachine.State;
+import org.wpilib.telemetry.Telemetry;
 import org.wpilib.command3.Trigger;
 
 import first.robot.Constants.SuperstructureStates;
@@ -239,6 +240,8 @@ public class StateMachineManager {
     public void logAdditionalData() {
         Logger.recordOutput("Mechanisms/Superstructure State", superstructure.getSuperstructureState().name());
         Logger.recordOutput("Mechanisms/End Effector/Wrist/Angle From Floor Deg", superstructure.getEEAngleFromFloorDeg());
+        Telemetry.log("Mechanisms/Superstructure State", superstructure.getSuperstructureState().name());
+        Telemetry.log("Mechanisms/End Effector/Wrist/Angle From Floor Deg", superstructure.getEEAngleFromFloorDeg());
     }
 
 }

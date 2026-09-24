@@ -19,6 +19,7 @@ import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation2d;
 
+import first.robot.Constants.FieldConstants;
 import first.robot.Constants.FieldConstants.BlueFieldConstants;
 import first.robot.Constants.FieldConstants.RedFieldConstants;
 
@@ -42,8 +43,8 @@ public class Robot extends LoggedRobot {
 
     
 
-    // Logger.addDataReceiver(new NT4Publisher());
-    // Logger.start();
+    Logger.addDataReceiver(new NT4Publisher());
+    Logger.start();
 
     // Logger.recordOutput("Field/Origin", FieldConstants.ORIGIN);
     // Logger.recordOutput("Field/Center", new Pose2d(FieldConstants.CENTER, Rotation2d.ZERO));
@@ -53,8 +54,8 @@ public class Robot extends LoggedRobot {
     // Logger.recordOutput("Field/Blue/Upper Shaft Vertices", BlueFieldConstants.UPPER_SHAFT_VERTICES);
     // Logger.recordOutput("Field/Blue/Classifier", new Translation2d[] {BlueFieldConstants.CLASSIFIER_SOURCE_CORNER, BlueFieldConstants.CLASSIFIER_MINE_CORNER});
     // Logger.recordOutput("Field/Blue/Classifier Center", BlueFieldConstants.CLASSIFIER_CENTER);
-    // Logger.recordOutput("Field/Blue/Mine", new Translation2d[] {BlueFieldConstants.MINE_CENTER, BlueFieldConstants.MINE_CENTER_CORNER, BlueFieldConstants.MINE_DS_CORNER});
-    // Logger.recordOutput("Field/Blue/Source", new Translation2d[] {BlueFieldConstants.SOURCE_CENTER, BlueFieldConstants.SOURCE_DS_CORNER, BlueFieldConstants.SOURCE_WALL_CORNER});
+    // Logger.recordOutput("Field/Blue/Mine", new Translation2d[] {BlueFieldConstants.MINE_CENTER.getTranslation(), BlueFieldConstants.MINE_CENTER_CORNER, BlueFieldConstants.MINE_DS_CORNER});
+    // Logger.recordOutput("Field/Blue/Source", new Translation2d[] {BlueFieldConstants.SOURCE_CENTER.getTranslation(), BlueFieldConstants.SOURCE_DS_CORNER, BlueFieldConstants.SOURCE_WALL_CORNER});
 
   }
 
