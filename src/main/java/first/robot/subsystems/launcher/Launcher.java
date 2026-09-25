@@ -108,7 +108,8 @@ public class Launcher implements Mechanism {
                 co.fork(setScoringState(state));
                 while(true) {
                     // if (tunableRPS.hasChanged(tunableRPS.hashCode())) rawMeanTarget = tunableRPS.get();
-                    if(rpsTuner.hasChanged()) rawMeanTarget = rpsTuner.get();
+                    // if(rpsTuner.hasChanged())
+                        rawMeanTarget = rpsTuner.get();
                     meanRPSTarget = Math.clamp(rawMeanTarget + adjust, -LauncherConstants.FLYWHEEL_MAX_SPEED_RPS, LauncherConstants.FLYWHEEL_MAX_SPEED_RPS);
                     io.setLauncherRPS(meanRPSTarget);
                     co.yield();

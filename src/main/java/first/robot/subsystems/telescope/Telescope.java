@@ -22,7 +22,6 @@ import org.wpilib.tunable.Tunables;
 import first.robot.subsystems.telescope.TelescopeConstants.ArmConstants;
 import first.robot.subsystems.telescope.TelescopeConstants.PivotConstants;
 import first.robot.subsystems.telescope.TelescopeConstants.TelescopeStates;
-import first.robot.util.LoggedTunableNumber;
 
 public class Telescope implements Mechanism {
     private final TelescopeIO io;
@@ -44,7 +43,9 @@ public class Telescope implements Mechanism {
     @AutoLogOutput(key="Mechanisms/Telescope/Arm/True Setpoint") private double trueExtension = 0.0;
     // private final LoggedTunableNumber tunableExtension = new LoggedTunableNumber("Telescope/Arm/Extension Setpoint In", 0.0);
 
-    private final TunableDouble angleTuner = TunableDouble.create(0.0);
+    private final TunableDouble angleTuner = TunableDouble.createConfig(0.0, TunableConfig.of(
+        TunableOption.Polling.GET_ON_CHANGE
+    ));
     private final TunableDouble extensionTuner = TunableDouble.create(0.0);
 
     /** Creates a new Telescope. */
@@ -114,8 +115,11 @@ public class Telescope implements Mechanism {
                 while(true) {
                     // if(tunableAngle.hasChanged(tunableAngle.hashCode())) rawAngle = tunableAngle.get();
                     // if(tunableExtension.hasChanged(tunableExtension.hashCode())) rawExtension = tunableExtension.get();
-                    if(angleTuner.hasChanged()) rawAngle = angleTuner.get();
-                    if(extensionTuner.hasChanged()) rawExtension = extensionTuner.get();
+
+                    // if(angleTuner.hasChanged())
+                        rawAngle = angleTuner.get();
+                    // if(extensionTuner.hasChanged())
+                        rawExtension = extensionTuner.get();
                     trueAngle = Math.clamp(rawAngle + angleAdjust, PivotConstants.MIN_ANGLE_DEG, PivotConstants.MAX_ANGLE_DEG);
                         trueExtension = Math.clamp(rawExtension + extensionAdjust, Units.metersToInches(ArmConstants.MIN_EXTENSION_METERS), Units.metersToInches(ArmConstants.MAX_EXTENSION_METERS));
                     io.setPivotAngleDeg(trueAngle);

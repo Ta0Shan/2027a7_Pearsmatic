@@ -223,7 +223,7 @@ public class DriveCommands {
                     new TrapezoidProfile.Constraints(driveMaxVel.get(), driveMaxAccel.get()));
             
             Translation2d error = goal.minus(drive.getPose()).getTranslation();
-            Rotation2d direction = error.getAngle().get();
+            Rotation2d direction = error.getAngle().orElse(drive.getRotation());
 
             ChassisVelocities currentVelocity = drive.getChassisVelocities();
             double velocityTowardsTarget = (currentVelocity.vx * direction.getCos()) + (currentVelocity.vy * direction.getSin());
@@ -236,7 +236,7 @@ public class DriveCommands {
             while(!driveController.atGoal() || !angleController.atGoal()) {
 
                 error = goal.minus(drive.getPose()).getTranslation();
-                direction = error.getAngle().get().plus(Rotation2d.PI);
+                direction = error.getAngle().orElse(drive.getRotation().minus(Rotation2d.PI)).plus(Rotation2d.PI);
                 // flipped because the direction of the error vector is opposite the direction of the necessary robot velocity vector
 
                 double twist = 

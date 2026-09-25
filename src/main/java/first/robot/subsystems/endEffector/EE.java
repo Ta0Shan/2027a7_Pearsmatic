@@ -103,8 +103,11 @@ public class EE implements Mechanism {
                 while(true) {
                     // if (tunableAngle.hasChanged(tunableAngle.hashCode())) rawAngle = tunableAngle.get();
                     // if (tunableVoltage.hasChanged(tunableVoltage.hashCode())) rawVoltage = tunableVoltage.get();
-                    if(angleTuner.hasChanged()) rawAngle = angleTuner.get();
-                    if(voltageTuner.hasChanged()) rawVoltage = voltageTuner.get();
+
+                    // if(angleTuner.hasChanged())
+                        rawAngle = angleTuner.get();
+                    // if(voltageTuner.hasChanged())
+                        rawVoltage = voltageTuner.get();
                     trueAngle = Math.clamp(rawAngle + angleAdjust, EEConstants.MIN_ANGLE_DEG, EEConstants.MAX_ANGLE_DEG);
                     trueVoltage = (Math.clamp(rawVoltage + voltageAdjust, -12, 12));
                     io.setWristAngleDeg(trueAngle);

@@ -55,5 +55,6 @@
     "axisCount": 0,
     "buttonCount": 0,
     "povCount": 0
-  }]
+  }],
+  "robotJoysticks": [{}, {"guid": "0300fa675e040000e002000000007801"}]
 }

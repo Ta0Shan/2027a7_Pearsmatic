@@ -11,8 +11,10 @@ import org.wpilib.command3.Trigger;
 import org.wpilib.command3.button.CommandXboxController;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.opmode.OpMode;
 import org.wpilib.telemetry.Telemetry;
 import org.wpilib.tunable.Selectable;
+import org.wpilib.tunable.Tunables;
 
 import first.robot.Constants.CrystalColor;
 import first.robot.Constants.Mode;
@@ -149,7 +151,7 @@ public class RobotContainer {
     autoChooser.addDefault("Auto 1", null);
     autoChooser.add("Auto 2", null);
 
-    Telemetry.log("Autonomous Command", autoChooser);
+    Tunables.publish("Autonomous Command", autoChooser);
 
     // SmartDashboard.putData("Autonomous Command", autoChooser);
   }
@@ -235,6 +237,12 @@ public class RobotContainer {
       );
     }
     PhoenixUtil.refreshAll();
+  }
+
+  public OpMode makeTeleop() {
+    return new OpMode() {
+      
+    };
   }
 
 }

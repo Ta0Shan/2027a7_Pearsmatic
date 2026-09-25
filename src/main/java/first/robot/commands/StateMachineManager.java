@@ -241,7 +241,7 @@ public class StateMachineManager {
         Logger.recordOutput("Mechanisms/Superstructure State", superstructure.getSuperstructureState().name());
         Logger.recordOutput("Mechanisms/End Effector/Wrist/Angle From Floor Deg", superstructure.getEEAngleFromFloorDeg());
         Telemetry.log("Mechanisms/Superstructure State", superstructure.getSuperstructureState().name());
-        Telemetry.log("Mechanisms/End Effector/Wrist/Angle From Floor Deg", superstructure.getEEAngleFromFloorDeg());
+        Telemetry.log("Mechanisms/Wrist/Angle From Floor Deg", superstructure.getEEAngleFromFloorDeg());
     }
 
 }
