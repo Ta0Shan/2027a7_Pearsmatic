@@ -100,9 +100,10 @@ public class SuperstructureCommands {
 
     public Command hold() {
         return Command.noRequirements(co -> {
-            while(true) {
-                co.yield();
-            }
+            // while(true) {
+            //     co.yield();
+            // }
+            co.park();
         }).named("HOLD");
     }
 

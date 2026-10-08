@@ -9,7 +9,6 @@ package first.robot.subsystems.drive;
 
 import static org.wpilib.units.Units.*;
 
-// TODO: no pathplanner vendordep yet, wait until
 // import com.pathplanner.lib.auto.AutoBuilder; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they add a version for cmdv3 somehow
 // import com.pathplanner.lib.config.ModuleConfig;
 // import com.pathplanner.lib.config.PIDConstants; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they add a version for cmdv3 somehow

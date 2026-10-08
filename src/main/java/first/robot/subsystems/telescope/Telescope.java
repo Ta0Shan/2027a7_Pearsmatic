@@ -44,8 +44,7 @@ public class Telescope implements Mechanism {
     // private final LoggedTunableNumber tunableExtension = new LoggedTunableNumber("Telescope/Arm/Extension Setpoint In", 0.0);
 
     private final TunableDouble angleTuner = TunableDouble.createConfig(0.0, TunableConfig.of(
-        TunableOption.Polling.GET_ON_CHANGE
-    ));
+        TunableOption.Polling.GET_ON_CHANGE));
     private final TunableDouble extensionTuner = TunableDouble.create(0.0);
 
     /** Creates a new Telescope. */
