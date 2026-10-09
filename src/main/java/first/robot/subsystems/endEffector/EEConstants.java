@@ -10,6 +10,8 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import first.robot.Constants;
+import first.robot.Constants.CrystalColor;
+import first.robot.util.PearadoxTalonFX.MotorData;
 
 public class EEConstants {
 
@@ -110,5 +112,23 @@ public class EEConstants {
 
     // excuse the jank constant its for sim
     public static final double STARTING_ANGLE_OFFSET_FROM_PARALLEL_DEG = 146.0;
+
+    public final record EEInputs(
+        MotorData wristData,
+        MotorData rollerData,
+        CrystalColor colorReading
+    ) {
+        public EEInputs() {
+            this(new MotorData(), new MotorData(), CrystalColor.NONE);
+        }
+    }
+
+    public static final EEInputs override(EEInputs inputs, CrystalColor override) {
+        return new EEInputs(
+            inputs.wristData(),
+            inputs.rollerData(),
+            override
+        );
+    }
 
 }

@@ -21,26 +21,27 @@ import org.wpilib.tunable.Tunables;
 
 import first.robot.subsystems.telescope.TelescopeConstants.ArmConstants;
 import first.robot.subsystems.telescope.TelescopeConstants.PivotConstants;
+import first.robot.subsystems.telescope.TelescopeConstants.TelescopeInputs;
 import first.robot.subsystems.telescope.TelescopeConstants.TelescopeStates;
 
 public class Telescope implements Mechanism {
     private final TelescopeIO io;
 
-    private final TelescopeIOInputsAutoLogged inputs = new TelescopeIOInputsAutoLogged();
+    private TelescopeInputs inputs = new TelescopeInputs();
 
     // @AutoLogOutput(key="Mechanisms/Telescope/State")
     private TelescopeStates state = TelescopeStates.HOME;
 
-    @AutoLogOutput(key="Mechanisms/Telescope/Arm/In Climb Sequence") private boolean isClimbing = false;
+    private boolean isClimbing = false;
     
-    @AutoLogOutput(key="Mechanisms/Telescope/Pivot/Raw Setpoint") private double rawAngle = 0.0;
-    @AutoLogOutput(key="Mechanisms/Telescope/Pivot/Adjust") private double angleAdjust = 0.0;
-    @AutoLogOutput(key="Mechanisms/Telescope/Pivot/True Setpoint") private double trueAngle = 0.0;
+    private double rawAngle = 0.0;
+    private double angleAdjust = 0.0;
+    private double trueAngle = 0.0;
     // private final LoggedTunableNumber tunableAngle = new LoggedTunableNumber("Telescope/Pivot/Angle Setpoint Deg", 0.0);
     
-    @AutoLogOutput(key="Mechanisms/Telescope/Arm/Raw Setpoint") private double rawExtension = 0.0;
-    @AutoLogOutput(key="Mechanisms/Telescope/Arm/Adjust") private double extensionAdjust = 0.0;
-    @AutoLogOutput(key="Mechanisms/Telescope/Arm/True Setpoint") private double trueExtension = 0.0;
+    private double rawExtension = 0.0;
+    private double extensionAdjust = 0.0;
+    private double trueExtension = 0.0;
     // private final LoggedTunableNumber tunableExtension = new LoggedTunableNumber("Telescope/Arm/Extension Setpoint In", 0.0);
 
     private final TunableDouble angleTuner = TunableDouble.createConfig(0.0, TunableConfig.of(
@@ -56,15 +57,8 @@ public class Telescope implements Mechanism {
     }
 
     public void logIO() {
-        io.updateInputs(inputs);
-        Logger.processInputs("Telescope", inputs);
-        Logger.recordOutput("Mechanisms/Telescope/Pivot/Setpoint Angle Deg", state.pivotAngleDeg);
-        Logger.recordOutput("Mechanisms/Telescope/Pivot/Angle Deg", getPivotAngleDeg());
-        Logger.recordOutput("Mechanisms/Telescope/Pivot/Abs Encoder Angle Deg", Units.rotationsToDegrees(inputs.pivotAbsEncoderPosition));
-
-        Logger.recordOutput("Mechanisms/Telescope/Arm/Extension Inches", getArmExtensionInches());
-        Logger.recordOutput("Mechanisms/Telescope/Arm/Setpoint Extension Inches", getArmSetpoint(state));
-        Logger.recordOutput("Mechanisms/Telescope/Arm/Dog Shifter PW", inputs.armServoAppliedPulseWidth);
+        inputs = io.updateInputs();
+        Telemetry.log("Inputs/Telescope", inputs);
 
         Telemetry.log("Mechanisms/Telescope State", state.name());
 
@@ -72,7 +66,7 @@ public class Telescope implements Mechanism {
         Telemetry.log("Mechanisms/Pivot/Adjust", angleAdjust);
         Telemetry.log("Mechanisms/Pivot/True Setpoint Deg", trueAngle);
         Telemetry.log("Mechanisms/Pivot/Angle Deg", getPivotAngleDeg());
-        Telemetry.log("Mechanisms/Pivot/Encoder Angle Deg", Units.rotationsToDegrees(inputs.pivotAbsEncoderPosition));
+        Telemetry.log("Mechanisms/Pivot/Encoder Angle Deg", Units.rotationsToDegrees(inputs.pivotEncoderPosition()));
 
         Telemetry.log("Mechanisms/Arm/Raw Setpoint", rawExtension);
         Telemetry.log("Mechanisms/Arm/Adjust", extensionAdjust);
@@ -95,7 +89,7 @@ public class Telescope implements Mechanism {
                         trueAngle = Math.clamp(rawAngle + angleAdjust, PivotConstants.MIN_ANGLE_DEG, PivotConstants.MAX_ANGLE_DEG);
                         trueExtension = Math.clamp(rawExtension + extensionAdjust, Units.metersToInches(ArmConstants.MIN_EXTENSION_METERS), Units.metersToInches(ArmConstants.MAX_EXTENSION_METERS));
                 while(setpointDebouncer.calculate(
-                    Math.abs((state.pivotAngleDeg - Units.rotationsToDegrees(inputs.pivotAbsEncoderPosition))) > 0.5
+                    Math.abs((state.pivotAngleDeg - Units.rotationsToDegrees(inputs.pivotEncoderPosition()))) > 0.5
                     || Math.abs(getArmSetpoint(state) - getArmExtensionInches()) > 0.05)
                 ) {
                     // functions as a timer, cmd gives up control when it's close to its setpoint (within 0.5° and 0.05");
@@ -163,17 +157,17 @@ public class Telescope implements Mechanism {
 
     public double getPivotAngleDeg() {
         return Units.rotationsToDegrees(mean(
-            inputs.pivot1Data.position(),
-            -inputs.pivot2Data.position(), // because this one follows in the opposed direction
-            inputs.pivot3Data.position())
+            inputs.pivot1Data().position(),
+            -inputs.pivot2Data().position(), // because this one follows in the opposed direction
+            inputs.pivot3Data().position())
             / PivotConstants.REDUCTION
         );
     }
 
     public double getArmExtensionInches() {
         return mean(
-            inputs.arm1Data.position(),
-            inputs.arm2Data.position())
+            inputs.arm1Data().position(),
+            inputs.arm2Data().position())
             / (isClimbing ? ArmConstants.CLIMB_REDUCTION : ArmConstants.EXTENSION_REDUCTION)
             // / (inputs.armServoAppliedPulseWidth == ArmConstants.CLIMB_PULSE_WIDTH_uS ? ArmConstants.CLIMB_REDUCTION : ArmConstants.EXTENSION_REDUCTION)
             // / ArmConstants.EXTENSION_REDUCTION

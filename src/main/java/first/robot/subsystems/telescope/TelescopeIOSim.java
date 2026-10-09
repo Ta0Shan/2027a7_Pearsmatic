@@ -13,6 +13,7 @@ import first.robot.Constants;
 import first.robot.subsystems.endEffector.EEConstants;
 import first.robot.subsystems.telescope.TelescopeConstants.ArmConstants;
 import first.robot.subsystems.telescope.TelescopeConstants.PivotConstants;
+import first.robot.subsystems.telescope.TelescopeConstants.TelescopeInputs;
 import first.robot.util.PhoenixUtil;
 import first.robot.util.TiltedElevatorSim;
 import first.robot.util.VariableLengthArmSim;
@@ -67,9 +68,7 @@ public class TelescopeIOSim extends TelescopeIOTalonFX {
     }
 
     @Override
-    public void updateInputs(TelescopeIOInputs inputs) {
-        super.updateInputs(inputs);
-
+    public TelescopeInputs updateInputs() {
         pivot1SimState.setSupplyVoltage(12);
         pivot2SimState.setSupplyVoltage(12);
         pivot3SimState.setSupplyVoltage(12);
@@ -105,6 +104,16 @@ public class TelescopeIOSim extends TelescopeIOTalonFX {
         // arm2SimState.setRawRotorPosition((armPhysicsSim.getPosition() / ArmConstants.ROTOR_CIRCUMF_METERS) * (isClimbing ? ArmConstants.CLIMB_REDUCTION : ArmConstants.EXTENSION_REDUCTION));
         // arm1SimState.setRotorVelocity((armPhysicsSim.getVelocity() / ArmConstants.ROTOR_CIRCUMF_METERS) * (isClimbing ? ArmConstants.CLIMB_REDUCTION : ArmConstants.EXTENSION_REDUCTION));
         // arm2SimState.setRotorVelocity((armPhysicsSim.getVelocity() / ArmConstants.ROTOR_CIRCUMF_METERS) * (isClimbing ? ArmConstants.CLIMB_REDUCTION : ArmConstants.EXTENSION_REDUCTION));
+
+        return new TelescopeInputs(
+            pivot1.getData(),
+            pivot2.getData(),
+            pivot3.getData(),
+            absoluteEncoder.getAbsolutePosition().getValueAsDouble(),
+            arm1.getData(),
+            arm2.getData(),
+            0
+        );
 
     }
 

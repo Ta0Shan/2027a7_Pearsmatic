@@ -15,6 +15,7 @@ import com.ctre.phoenix6.signals.SensorDirectionValue;
 
 import first.robot.Constants;
 import first.robot.subsystems.launcher.LauncherConstants;
+import first.robot.util.PearadoxTalonFX.MotorData;
 
 /** Add your docs here. */
 public class TelescopeConstants {
@@ -149,6 +150,20 @@ public class TelescopeConstants {
         public static final double STATIC_STAGE_MOI = (1./3.) * STATIC_STAGE_MASS_KG * Math.pow(STATIC_STAGE_LENGTH_METERS/2, 2);
         public static final double CARRIAGE_BASE_MOI = (1./12.) * CARRIAGE_MASS_KG * Math.pow(CARRIAGE_LENGTH_METERS/2, 2);
 
+    }
+
+    public final record TelescopeInputs(
+        MotorData pivot1Data,
+        MotorData pivot2Data,
+        MotorData pivot3Data,
+        double pivotEncoderPosition,
+        MotorData arm1Data,
+        MotorData arm2Data,
+        int servoPulseWidth
+    ) {
+        public TelescopeInputs() {
+            this(new MotorData(), new MotorData(), new MotorData(), 0.0, new MotorData(), new MotorData(), 0);
+        }
     }
 
 }

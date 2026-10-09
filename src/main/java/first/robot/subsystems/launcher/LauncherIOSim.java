@@ -8,6 +8,7 @@ import org.wpilib.simulation.FlywheelSim;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import first.robot.Constants;
+import first.robot.subsystems.launcher.LauncherConstants.LauncherInputs;
 
 public class LauncherIOSim extends LauncherIOTalonFX {
     private final FlywheelSim launcher1PhysicsSim = new FlywheelSim(Models.flywheelFromPhysicalConstants(
@@ -38,9 +39,7 @@ public class LauncherIOSim extends LauncherIOTalonFX {
     }
 
     @Override
-    public void updateInputs(LauncherIOInputs inputs) {
-        super.updateInputs(inputs);
-
+    public LauncherInputs updateInputs() {
         launcher1SimState.setSupplyVoltage(12);
         launcher1PhysicsSim.setInputVoltage(launcher1SimState.getMotorVoltage());
         launcher2SimState.setSupplyVoltage(12);
@@ -56,5 +55,7 @@ public class LauncherIOSim extends LauncherIOTalonFX {
         launcher1SimState.setRotorVelocity(Units.radiansToRotations(launcher1PhysicsSim.getAngularVelocity()) * LauncherConstants.REDUCTION);
         launcher2SimState.setRawRotorPosition(Units.radiansToRotations(launcher2Position));
         launcher2SimState.setRotorVelocity(Units.radiansToRotations(launcher2PhysicsSim.getAngularVelocity()) * LauncherConstants.REDUCTION);
+
+        return super.updateInputs();
     }
 }

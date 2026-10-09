@@ -2,6 +2,7 @@ package first.robot.util;
 
 import org.wpilib.command3.Command;
 import org.wpilib.system.RobotController;
+import org.wpilib.telemetry.Telemetry;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.HashMap;
@@ -45,18 +46,18 @@ public class EnergyTracker {
 
   public static Command logEnergy() {
     return Command.noRequirements(co -> {
-    Logger.recordOutput("EnergyTracker/Total Charge", totalChargeConsumedAh, "amp hours");
-    Logger.recordOutput("EnergyTracker/Total Energy", totalEnergyConsumedWh, "watt hours");
+    Telemetry.log("EnergyTracker/Total Charge Amp Hours", totalChargeConsumedAh);
+    Telemetry.log("EnergyTracker/Total Energy Watt Hours", totalEnergyConsumedWh);
 
     for (var entry : subsystemCharges.entrySet()) {
-      Logger.recordOutput(
-          "EnergyTracker/Charges/" + entry.getKey().toString(), entry.getValue(), "amps hours");
+      Telemetry.log(
+          "EnergyTracker/Charges/" + entry.getKey().toString() + " Amp Hours", entry.getValue());
       co.yield();
     }
 
     for (var entry : subsystemEnergies.entrySet()) {
-      Logger.recordOutput(
-          "EnergyTracker/Energies/" + entry.getKey().toString(), entry.getValue(), "watt hours");
+      Telemetry.log(
+          "EnergyTracker/Energies/" + entry.getKey().toString() + " Watt Hours", entry.getValue());
       co.yield();
     }
   }).named("ENERGY LOGS");

@@ -13,24 +13,25 @@ import org.wpilib.tunable.Tunables;
 import first.robot.subsystems.endEffector.EEConstants.WristStates;
 import first.robot.util.LoggedTunableNumber;
 import first.robot.Constants.CrystalColor;
+import first.robot.subsystems.endEffector.EEConstants.EEInputs;
 import first.robot.subsystems.endEffector.EEConstants.RollerStates;
 
 public class EE implements Mechanism {
 
     private final EEIO io;
 
-    private final EEIOInputsAutoLogged inputs = new EEIOInputsAutoLogged();
+    private EEInputs inputs = new EEInputs();
 
     private WristStates wristState = WristStates.STOWED;
 
-    @AutoLogOutput(key="Mechanisms/End Effector/Wrist/Raw Setpoint") private double rawAngle = 0.0;
-    @AutoLogOutput(key="Mechanisms/End Effector/Wrist/Adjust") private double angleAdjust = 0.0;
-    @AutoLogOutput(key="Mechanisms/End Effector/Wrist/True Setpoint") private double trueAngle = 0.0;
+    private double rawAngle = 0.0;
+    private double angleAdjust = 0.0;
+    private double trueAngle = 0.0;
     // private final LoggedTunableNumber tunableAngle = new LoggedTunableNumber("End Effector/Wrist/Angle Setpoint Deg", 0.0);
     
-    @AutoLogOutput(key="Mechanisms/End Effector/Rollers/Raw Setpoint") private double rawVoltage = 0.0;
-    @AutoLogOutput(key="Mechanisms/End Effector/Rollers/Adjust") private double voltageAdjust = 0.0;
-    @AutoLogOutput(key="Mechanisms/End Effector/Rollers/True Setpoint") private double trueVoltage = 0.0;
+    private double rawVoltage = 0.0;
+    private double voltageAdjust = 0.0;
+    private double trueVoltage = 0.0;
     // private final LoggedTunableNumber tunableVoltage = new LoggedTunableNumber("End Effector/Rollers/Voltage Setpoint", 0.0);
 
     private RollerStates rollerState = RollerStates.IDLE;
@@ -46,20 +47,8 @@ public class EE implements Mechanism {
     }
 
     public void logIO() {
-        io.updateInputs(inputs);
-        Logger.processInputs("End Effector", inputs);
-
-        Logger.recordOutput("Mechanisms/End Effector/State", wristState.name() + " " + rollerState.name());
-        Logger.recordOutput("Mechanisms/End Effector/Crystal Color", crystalColor().name());
-
-        Logger.recordOutput("Mechanisms/End Effector/Wrist/Angle Deg", getWristAngleDeg());
-        Logger.recordOutput("Mechanisms/End Effector/Wrist/Setpoint Deg", wristState.angleDeg);
-
-        Logger.recordOutput("Mechanisms/End Effector/Rollers/Voltage Setpoint", rollerState.voltage);
-        Logger.recordOutput("Mechanisms/End Effector/Rollers/Voltage", inputs.rollerData.appliedVolts());
-        Logger.recordOutput("Mechanisms/End Effector/Rollers/RPS", getRollersRPS());
-        Logger.recordOutput("Mechanisms/End Effector/Rollers/Surface Speed MPS", getRollersRPS() * EEConstants.ROLLER_CIRCUMF_METERS);
-
+        inputs = io.updateInputs(inputs);
+        Telemetry.log("Inputs/EE", inputs);
 
         Telemetry.log("Mechanisms/Wrist/State", wristState.name());
         Telemetry.log("Mechanisms/Wrist/Crystal", crystalColor().name());
@@ -72,7 +61,7 @@ public class EE implements Mechanism {
         Telemetry.log("Mechanisms/Rollers/Raw Setpoint", rawVoltage);
         Telemetry.log("Mechanisms/Rollers/Adjust", voltageAdjust);
         Telemetry.log("Mechanisms/Rollers/True Setpoint V", trueVoltage);
-        Telemetry.log("Mechanisms/Rollers/Voltage", inputs.rollerData.appliedVolts());
+        Telemetry.log("Mechanisms/Rollers/Voltage", inputs.rollerData().appliedVolts());
         Telemetry.log("Mechanisms/Rollers/RPS", getRollersRPS());
         Telemetry.log("Mechanisms/Rollers/Surface Speed MPS", getRollersRPS() * EEConstants.ROLLER_CIRCUMF_METERS);
     }
@@ -89,7 +78,7 @@ public class EE implements Mechanism {
                         trueAngle = Math.clamp(rawAngle + angleAdjust, EEConstants.MIN_ANGLE_DEG, EEConstants.MAX_ANGLE_DEG);
                         trueVoltage = (rollerState==RollerStates.IDLE ? 0.0 : Math.clamp(rawVoltage + voltageAdjust, -12, 12));
                 while(setpointDebouncer.calculate(
-                    Math.abs(wristState.angleDeg - Units.rotationsToDegrees(inputs.wristData.position()) / EEConstants.WRIST_REDUCTION) > 0.5)
+                    Math.abs(wristState.angleDeg - Units.rotationsToDegrees(inputs.wristData().position()) / EEConstants.WRIST_REDUCTION) > 0.5)
                 ) {
                     // functions as a timer, cmd gives up control when it's close to its setpoint (within 0.5°)
                     io.setWristAngleDeg(trueAngle);
@@ -154,25 +143,25 @@ public class EE implements Mechanism {
     }
 
     public double getWristAngleDeg() {
-        return Units.rotationsToDegrees(inputs.wristData.position()) / EEConstants.WRIST_REDUCTION;
+        return Units.rotationsToDegrees(inputs.wristData().position()) / EEConstants.WRIST_REDUCTION;
     }
 
     public double getRollersRPS() {
-        return inputs.rollerData.velocity() / EEConstants.ROLLER_REDUCTION;
+        return inputs.rollerData().velocity() / EEConstants.ROLLER_REDUCTION;
     }
 
     @AutoLogOutput(key="Mechanisms/End Effector/Has Crystal")
     public boolean hasCrystal() {
-        return inputs.colorReading != CrystalColor.NONE;
+        return inputs.colorReading() != CrystalColor.NONE;
     }
 
     public CrystalColor crystalColor() {
-        return inputs.colorReading;
+        return inputs.colorReading();
     }
 
     public Command setCrystalColor(CrystalColor color) {
         return Command.noRequirements(co -> {
-            inputs.colorReading = color;
+            EEConstants.override(inputs, color);
         }).named("SET COLOR " + color.name());
     }
 }

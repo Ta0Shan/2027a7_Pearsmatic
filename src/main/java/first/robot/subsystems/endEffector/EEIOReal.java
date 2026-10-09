@@ -8,6 +8,7 @@ import com.revrobotics.ColorSensorV3.ColorSensorResolution;
 import com.revrobotics.ColorSensorV3.GainFactor;
 
 import first.robot.Constants.CrystalColor;
+import first.robot.subsystems.endEffector.EEConstants.EEInputs;
 
 public class EEIOReal extends EEIOTalonFX {
     // because CTRE is so nice, they make sim states, which means to simulate we only need to build on the
@@ -26,9 +27,8 @@ public class EEIOReal extends EEIOTalonFX {
     }
 
     @Override
-    public void updateInputs(EEIOInputs inputs) {
-        super.updateInputs(inputs);
-        inputs.colorReading = getColorReading();
+    public EEInputs updateInputs(EEInputs inputs) {
+        return super.updateInputs(inputs);
     }
 
     public CrystalColor getColorReading() {

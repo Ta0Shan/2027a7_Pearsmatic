@@ -4,6 +4,7 @@ import com.ctre.phoenix6.controls.CoastOut;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 
 import first.robot.Constants;
+import first.robot.subsystems.launcher.LauncherConstants.LauncherInputs;
 import first.robot.util.PearadoxTalonFX;
 import first.robot.util.EnergyTracker.Subsystem;
 
@@ -30,9 +31,11 @@ public abstract class LauncherIOTalonFX implements LauncherIO {
         coastOut = new CoastOut();
     }
 
-    public void updateInputs(LauncherIOInputs inputs) {
-        inputs.launcher1Data = launcher1.getData();
-        inputs.launcher2Data = launcher2.getData();
+    public LauncherInputs updateInputs() {
+        return new LauncherInputs(
+            launcher1.getData(),
+            launcher2.getData()
+        );
     }
 
     public void setLauncherRPS(double rps) {

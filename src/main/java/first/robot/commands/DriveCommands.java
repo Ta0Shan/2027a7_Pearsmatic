@@ -20,6 +20,7 @@ import org.wpilib.math.util.Units;
 import org.wpilib.driverstation.internal.DriverStationBackend;
 import org.wpilib.driverstation.Alliance;
 import org.wpilib.system.Timer;
+import org.wpilib.telemetry.Telemetry;
 import org.wpilib.tunable.Tunable;
 import org.wpilib.tunable.TunableDouble;
 import org.wpilib.tunable.Tunables;
@@ -199,7 +200,7 @@ public class DriveCommands {
 
             Pose2d goal = pose.get();
 
-            Logger.recordOutput("Align/Trajectory", new Translation2d[] {drive.getPose().getTranslation(), goal.getTranslation()});
+            Telemetry.log("Align/Trajectory", new Translation2d[] {drive.getPose().getTranslation(), goal.getTranslation()});
 
             // Create PID controller
             ProfiledPIDController angleController =
@@ -252,12 +253,12 @@ public class DriveCommands {
 
                 drive.runVelocity(new ChassisVelocities(throttle.getX(), throttle.getY(), twist));
                 
-                Logger.recordOutput("Align/Goal Pose", goal);
-                Logger.recordOutput("Align/Translation Error", error.getNorm());
-                Logger.recordOutput("Align/Rotation Error", goal.getRotation().minus(drive.getRotation()).getDegrees());
-                Logger.recordOutput("Align/Throttle", velocity);
-                Logger.recordOutput("Align/Direction", direction.getDegrees());
-                Logger.recordOutput("Align/Twist", twist);
+                Telemetry.log("Align/Goal Pose", goal);
+                Telemetry.log("Align/Translation Error", error.getNorm());
+                Telemetry.log("Align/Rotation Error", goal.getRotation().minus(drive.getRotation()).getDegrees());
+                Telemetry.log("Align/Throttle", velocity);
+                Telemetry.log("Align/Direction", direction.getDegrees());
+                Telemetry.log("Align/Twist", twist);
 
                 co.yield();
             }

@@ -166,8 +166,6 @@ public class Drive implements Mechanism {
 
     // Log empty setpoint velocities when disabled
     if (DriverStationBackend.isDisabled()) {
-      Logger.recordOutput("SwerveVelocities/Setpoints", new SwerveModuleVelocity[] {});
-      Logger.recordOutput("SwerveVelocities/SetpointsOptimized", new SwerveModuleVelocity[] {});
       Telemetry.log("SwerveVelocities/Setpoints", new SwerveModuleVelocity[] {});
       Telemetry.log("SwerveVelocities/SetpointsOptimized", new SwerveModuleVelocity[] {});
     }
@@ -220,8 +218,6 @@ public class Drive implements Mechanism {
       SwerveModuleVelocity[] desaturatedVelocities = SwerveDriveKinematics.desaturateWheelVelocities(setpointVelocities, TunerConstants.kSpeedAt12Volts);
 
       // Log unoptimized setpoints and setpoint speeds
-      Logger.recordOutput("SwerveVelocities/Setpoints", desaturatedVelocities);
-      Logger.recordOutput("SwerveChassisVelocities/Setpoints", discreteSpeeds);
       Telemetry.log("SwerveVelocities/Setpoints", desaturatedVelocities);
       Telemetry.log("SwerveChassisVelocities/Setpoints", discreteSpeeds);
 
@@ -231,7 +227,6 @@ public class Drive implements Mechanism {
       }
 
       // Log optimized setpoints (runSetpoint mutates each state)
-      Logger.recordOutput("SwerveVelocities/SetpointsOptimized", setpointVelocities);
       Telemetry.log("SwerveVelocities/SetpointsOptimized", setpointVelocities);
   }
 

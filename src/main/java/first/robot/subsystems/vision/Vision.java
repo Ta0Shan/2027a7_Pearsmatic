@@ -20,6 +20,7 @@ import org.wpilib.math.geometry.Pose3d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.numbers.N1;
 import org.wpilib.math.numbers.N3;
+import org.wpilib.telemetry.Telemetry;
 import org.wpilib.util.Alert;
 import org.wpilib.util.Alert.Level;
 import org.wpilib.command3.Mechanism;
@@ -142,16 +143,16 @@ public class Vision implements Mechanism {
       }
 
       // Log camera metadata
-      Logger.recordOutput(
+      Telemetry.log(
           "Vision/Camera" + Integer.toString(cameraIndex) + "/TagPoses",
           tagPoses.toArray(new Pose3d[0]));
-      Logger.recordOutput(
+      Telemetry.log(
           "Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPoses",
           robotPoses.toArray(new Pose3d[0]));
-      Logger.recordOutput(
+      Telemetry.log(
           "Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPosesAccepted",
           robotPosesAccepted.toArray(new Pose3d[0]));
-      Logger.recordOutput(
+      Telemetry.log(
           "Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPosesRejected",
           robotPosesRejected.toArray(new Pose3d[0]));
       allTagPoses.addAll(tagPoses);
@@ -161,11 +162,11 @@ public class Vision implements Mechanism {
     }
 
     // Log summary data
-    Logger.recordOutput("Vision/Summary/TagPoses", allTagPoses.toArray(new Pose3d[0]));
-    Logger.recordOutput("Vision/Summary/RobotPoses", allRobotPoses.toArray(new Pose3d[0]));
-    Logger.recordOutput(
+    Telemetry.log("Vision/Summary/TagPoses", allTagPoses.toArray(new Pose3d[0]));
+    Telemetry.log("Vision/Summary/RobotPoses", allRobotPoses.toArray(new Pose3d[0]));
+    Telemetry.log(
         "Vision/Summary/RobotPosesAccepted", allRobotPosesAccepted.toArray(new Pose3d[0]));
-    Logger.recordOutput(
+    Telemetry.log(
         "Vision/Summary/RobotPosesRejected", allRobotPosesRejected.toArray(new Pose3d[0]));
   }
 

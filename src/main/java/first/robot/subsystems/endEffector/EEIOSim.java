@@ -9,6 +9,7 @@ import org.wpilib.simulation.SingleJointedArmSim;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import first.robot.Constants;
+import first.robot.subsystems.endEffector.EEConstants.EEInputs;
 
 public class EEIOSim extends EEIOTalonFX {
     private final SingleJointedArmSim wristPhysicsSim = new SingleJointedArmSim(
@@ -41,9 +42,7 @@ public class EEIOSim extends EEIOTalonFX {
     }
 
     @Override
-    public void updateInputs(EEIOInputs inputs) {
-        super.updateInputs(inputs);
-
+    public EEInputs updateInputs(EEInputs inputs) {
         wristSimState.setSupplyVoltage(12);
         wristPhysicsSim.setInputVoltage(wristSimState.getMotorVoltage());
 
@@ -61,5 +60,7 @@ public class EEIOSim extends EEIOTalonFX {
         rollerPosition += rollerPhysicsSim.getAngularVelocity() * Constants.LOOP_PERIOD_SEC * EEConstants.ROLLER_REDUCTION;
         rollerSimState.setRawRotorPosition(Units.radiansToRotations(rollerPosition));
         rollerSimState.setRotorVelocity(Units.radiansToRotations(rollerPhysicsSim.getAngularVelocity()) * EEConstants.ROLLER_REDUCTION);
+
+        return super.updateInputs(inputs);
     }
 }

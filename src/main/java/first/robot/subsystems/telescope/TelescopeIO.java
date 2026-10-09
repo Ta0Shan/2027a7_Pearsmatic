@@ -4,6 +4,7 @@ import java.util.function.DoubleSupplier;
 
 import org.littletonrobotics.junction.AutoLog;
 
+import first.robot.subsystems.telescope.TelescopeConstants.TelescopeInputs;
 import first.robot.util.PearadoxTalonFX.MotorData;
 
 public interface TelescopeIO {
@@ -22,7 +23,7 @@ public interface TelescopeIO {
         public int armServoAppliedPulseWidth;
     }
 
-    public default void updateInputs(TelescopeIOInputs inputs) {}
+    public default TelescopeInputs updateInputs() {return new TelescopeInputs();}
 
     public default void setPivotAngleDeg(double angleDeg) {}
 

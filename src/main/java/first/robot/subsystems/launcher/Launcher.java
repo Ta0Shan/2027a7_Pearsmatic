@@ -10,22 +10,23 @@ import org.wpilib.tunable.TunableDouble;
 import org.wpilib.tunable.Tunables;
 
 import first.robot.subsystems.launcher.LauncherConstants.LauncherStates;
+import first.robot.subsystems.launcher.LauncherConstants.LauncherInputs;
 import first.robot.util.LoggedTunableNumber;
 
 public class Launcher implements Mechanism {
     private final LauncherIO io;
 
-    @AutoLogOutput(key="Mechanisms/Launcher/State") private LauncherStates state = LauncherStates.OFF;
-    @AutoLogOutput(key="Mechanisms/Launcher/Scoring State") private LauncherStates scoringState = LauncherStates.SELF_DIRECTING;
+    private LauncherStates state = LauncherStates.OFF;
+    private LauncherStates scoringState = LauncherStates.SELF_DIRECTING;
 
-    @AutoLogOutput(key="Mechanisms/Launcher/Raw Target") private double rawMeanTarget = 0.0;
-    @AutoLogOutput(key="Mechanisms/Launcher/Adjust") private double adjust = 0.0;
-    @AutoLogOutput(key="Mechanisms/Launcher/True RPS Target") private double meanRPSTarget = 0.0;
+    private double rawMeanTarget = 0.0;
+    private double adjust = 0.0;
+    private double meanRPSTarget = 0.0;
     // private final LoggedTunableNumber tunableRPS = new LoggedTunableNumber("Launcher/RPS Setpoint", 0.0);
 
-    @AutoLogOutput(key="Mechanisms/Launcher/Error/Minimum Percent") private double minimumErrorPercent = 0.0;
+    private double minimumErrorPercent = 0.0;
 
-    private final LauncherIOInputsAutoLogged inputs = new LauncherIOInputsAutoLogged();
+    private LauncherInputs inputs = new LauncherInputs();
 
     private final TunableDouble manualSetpoint = TunableDouble.create(20.0);
     private final TunableDouble rpsTuner = TunableDouble.create(0.0);
@@ -38,26 +39,8 @@ public class Launcher implements Mechanism {
     }
 
     public void logIO() {
-        io.updateInputs(inputs);
-        Logger.processInputs("Launcher", inputs);
-
-        Logger.recordOutput("Mechanisms/Launcher/Left/RPS Target",
-        (meanRPSTarget == 0 ? 0 : ((meanRPSTarget * LauncherConstants.REDUCTION) + (LauncherConstants.RPS_DIFFERENCE / 2)) / LauncherConstants.REDUCTION));
-        Logger.recordOutput("Mechanisms/Launcher/Left/RPS", inputs.launcher1Data.velocity());
-        Logger.recordOutput("Mechanisms/Launcher/Left/Surface Speed MPS", inputs.launcher1Data.velocity() * LauncherConstants.FLYWHEEL_CIRCUMF_METERS);
-        
-        Logger.recordOutput("Mechanisms/Launcher/Right/RPS Target", 
-        (meanRPSTarget == 0 ? 0 : ((meanRPSTarget * LauncherConstants.REDUCTION) - (LauncherConstants.RPS_DIFFERENCE / 2)) / LauncherConstants.REDUCTION));
-        Logger.recordOutput("Mechanisms/Launcher/Right/RPS", inputs.launcher2Data.velocity());
-        Logger.recordOutput("Mechanisms/Launcher/Right/Surface Speed MPS", inputs.launcher2Data.velocity() * LauncherConstants.FLYWHEEL_CIRCUMF_METERS);
-
-        // Logger.recordOutput("Mechanisms/Launcher/Mean/RPS Target", meanRPSTarget);
-        Logger.recordOutput("Mechanisms/Launcher/Mean RPS", getMeanRPS());
-        Logger.recordOutput("Mechanisms/Launcher/Mean Surface Speed MPS", getMeanRPS() * LauncherConstants.FLYWHEEL_CIRCUMF_METERS);
-
-        Logger.recordOutput("Mechanisms/Launcher/Error/Raw RPS", meanRPSTarget - getMeanRPS());
-        Logger.recordOutput("Mechanisms/Launcher/Error/Percent", Math.abs(meanRPSTarget != 0 ? (meanRPSTarget - getMeanRPS()) / meanRPSTarget : 0) * 100);
-        // Logger.recordOutput("Mechanisms/Launcher/Error/Minimum Percent", minimumErrorPercent);
+        inputs = io.updateInputs();
+        Telemetry.log("Inputs/Launcher", inputs);
 
         Telemetry.log("Mechanisms/Launcher/Raw Setpoint", rawMeanTarget);
         Telemetry.log("Mechanisms/Launcher/Adjust", adjust);
@@ -69,14 +52,13 @@ public class Launcher implements Mechanism {
 
         Telemetry.log("Mechanisms/Launcher/Left/Setpoint RPS",
             (meanRPSTarget == 0 ? 0 : ((meanRPSTarget * LauncherConstants.REDUCTION) + (LauncherConstants.RPS_DIFFERENCE / 2)) / LauncherConstants.REDUCTION));
-        Telemetry.log("Mechanisms/Launcher/Left/RPS", inputs.launcher1Data.velocity() / LauncherConstants.REDUCTION);
-        Telemetry.log("Mechanisms/Launcher/Left/Surface Speed MPS", inputs.launcher1Data.velocity() / LauncherConstants.REDUCTION * LauncherConstants.FLYWHEEL_CIRCUMF_METERS);
+        Telemetry.log("Mechanisms/Launcher/Left/RPS", inputs.launcher1Data().velocity() / LauncherConstants.REDUCTION);
+        Telemetry.log("Mechanisms/Launcher/Left/Surface Speed MPS", inputs.launcher1Data().velocity() / LauncherConstants.REDUCTION * LauncherConstants.FLYWHEEL_CIRCUMF_METERS);
 
         Telemetry.log("Mechanisms/Launcher/Right/Setpoint RPS",
             (meanRPSTarget == 0 ? 0 : ((meanRPSTarget * LauncherConstants.REDUCTION) - (LauncherConstants.RPS_DIFFERENCE / 2)) / LauncherConstants.REDUCTION));
-        Telemetry.log("Mechanisms/Launcher/Right/RPS", inputs.launcher2Data.velocity() / LauncherConstants.REDUCTION);
-        Telemetry.log("Mechanisms/Launcher/Right/Surface Speed MPS", inputs.launcher2Data.velocity() / LauncherConstants.REDUCTION * LauncherConstants.FLYWHEEL_CIRCUMF_METERS);
-
+        Telemetry.log("Mechanisms/Launcher/Right/RPS", inputs.launcher2Data().velocity() / LauncherConstants.REDUCTION);
+        Telemetry.log("Mechanisms/Launcher/Right/Surface Speed MPS", inputs.launcher2Data().velocity() / LauncherConstants.REDUCTION * LauncherConstants.FLYWHEEL_CIRCUMF_METERS);
 
     }
 
@@ -145,7 +127,7 @@ public class Launcher implements Mechanism {
     }
 
     public double getMeanRPS() {
-        return ((inputs.launcher1Data.velocity() + inputs.launcher2Data.velocity()) / 2) / LauncherConstants.REDUCTION;
+        return ((inputs.launcher1Data().velocity() + inputs.launcher2Data().velocity()) / 2) / LauncherConstants.REDUCTION;
     }
 
 }

@@ -4,110 +4,166 @@
 
 package first.robot;
 
-import java.util.ArrayList;
-import java.util.List;
+import static org.wpilib.units.Units.Nanoseconds;
+import static org.wpilib.units.Units.Seconds;
 
-import org.littletonrobotics.junction.LoggedRobot;
-import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.networktables.NT4Publisher;
+import java.util.ArrayList;
+
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Scheduler;
-import org.wpilib.command3.SchedulerEvent.CompletedWithError;
-import org.wpilib.command3.SchedulerEvent.Interrupted;
+import org.wpilib.command3.SchedulerEvent;
+import org.wpilib.framework.OpModeRobot;
+import org.wpilib.hardware.hal.RobotMode;
+import org.wpilib.opmode.OpMode;
+import org.wpilib.telemetry.Telemetry;
 
-import org.wpilib.math.geometry.Pose2d;
-import org.wpilib.math.geometry.Rotation2d;
-import org.wpilib.math.geometry.Translation2d;
+import first.robot.generated.TunerConstants;
+import first.robot.subsystems.MechVisualizer;
+import first.robot.subsystems.drive.Drive;
+import first.robot.subsystems.drive.GyroIO;
+import first.robot.subsystems.drive.GyroIOPigeon2;
+import first.robot.subsystems.drive.ModuleIO;
+import first.robot.subsystems.drive.ModuleIOSim;
+import first.robot.subsystems.drive.ModuleIOTalonFX;
+import first.robot.subsystems.endEffector.EE;
+import first.robot.subsystems.endEffector.EEIO;
+import first.robot.subsystems.endEffector.EEIOReal;
+import first.robot.subsystems.endEffector.EEIOSim;
+import first.robot.subsystems.launcher.Launcher;
+import first.robot.subsystems.launcher.LauncherIO;
+import first.robot.subsystems.launcher.LauncherIOReal;
+import first.robot.subsystems.launcher.LauncherIOSim;
+import first.robot.subsystems.telescope.Telescope;
+import first.robot.subsystems.telescope.TelescopeIO;
+import first.robot.subsystems.telescope.TelescopeIOReal;
+import first.robot.subsystems.telescope.TelescopeIOSim;
 
-import first.robot.Constants.FieldConstants;
-import first.robot.Constants.FieldConstants.BlueFieldConstants;
-import first.robot.Constants.FieldConstants.RedFieldConstants;
+public class Robot extends OpModeRobot {
+  
+  public final Drive drive;
+  public final Telescope telescope;
+  public final EE endEffector;
+  public final Launcher launcher;
 
-import org.wpilib.command3.SchedulerEvent.Canceled;
+  private final MechVisualizer visualizer;
 
-public class Robot extends LoggedRobot {
-  private Command autonomousCommand;
-
-  private final RobotContainer robotContainer;
-  private final Scheduler scheduler;
-
-  private final List<String> problemCommands;
+  private final ArrayList<String> issues = new ArrayList<String>();
 
   public Robot() {
-    robotContainer = new RobotContainer();
 
-    scheduler = Scheduler.getDefault();
-    scheduler.addPeriodic(() -> robotContainer.periodic());
+    switch(Constants.currentMode) {
+      case REAL:
+        // Real robot, instantiate hardware IO implementations
+        drive = new Drive(
+          new GyroIOPigeon2(),
+          new ModuleIOTalonFX(TunerConstants.FrontLeft),
+          new ModuleIOTalonFX(TunerConstants.FrontRight),
+          new ModuleIOTalonFX(TunerConstants.BackLeft),
+          new ModuleIOTalonFX(TunerConstants.BackRight)
+        );
+        telescope = new Telescope(new TelescopeIOReal());
+        endEffector = new EE(new EEIOReal());
+        launcher = new Launcher(new LauncherIOReal());
+        break;
+      case SIM:
+        // Sim robot, instantiate physics sim IO implementations
+        
+        drive = new Drive(
+          new GyroIO() {},
+          new ModuleIOSim(TunerConstants.FrontLeft),
+          new ModuleIOSim(TunerConstants.FrontRight),
+          new ModuleIOSim(TunerConstants.BackLeft),
+          new ModuleIOSim(TunerConstants.BackRight)
+        );
+        telescope = new Telescope(new TelescopeIOSim());
+        endEffector = new EE(new EEIOSim());
+        launcher = new Launcher(new LauncherIOSim());
+        break;
+      default:
+        // Replayed robot, disable IO implementations
+        drive = new Drive(
+          new GyroIO() {},
+          new ModuleIO() {},
+          new ModuleIO() {},
+          new ModuleIO() {},
+          new ModuleIO() {}
+        );
+        telescope = new Telescope(new TelescopeIO() {});
+        endEffector = new EE(new EEIO() {});
+        launcher = new Launcher(new LauncherIO() {});
+        break;
+    }
 
-    problemCommands = new ArrayList<String>();
+    Scheduler.getDefault().addPeriodic(() -> {
+      telescope.logIO();
+      launcher.logIO();
+      endEffector.logIO();
+      drive.periodic();
+    });
 
-    
+    visualizer = new MechVisualizer();
 
-    Logger.addDataReceiver(new NT4Publisher());
-    Logger.start();
+    // OpModeContainer.generateAuto(this, Command.noRequirements(co -> {}).named("auto1"));
+    // OpModeContainer.generateAuto(this, Command.noRequirements(co -> {}).named("auto2"));
+    // OpModeContainer.generateAuto(this, Command.noRequirements(co -> {}).named("auto3"));
+    this.addOpMode(RobotMode.AUTONOMOUS, "auto1", () -> generateAuto(Command.noRequirements(co -> {}).named("auto1")));
+    this.addOpMode(RobotMode.AUTONOMOUS, "auto2", () -> generateAuto(Command.noRequirements(co -> {}).named("auto2")));
+    this.addOpMode(RobotMode.AUTONOMOUS, "auto3", () -> generateAuto(Command.noRequirements(co -> {}).named("auto3")));
 
-    // Logger.recordOutput("Field/Origin", FieldConstants.ORIGIN);
-    // Logger.recordOutput("Field/Center", new Pose2d(FieldConstants.CENTER, Rotation2d.ZERO));
-    
-    // Logger.recordOutput("Field/Blue/Cave Center", new Pose2d(BlueFieldConstants.CAVE_CENTER, Rotation2d.ZERO));
-    // Logger.recordOutput("Field/Blue/Lower Shaft Faces", BlueFieldConstants.LOWER_SHAFT_FACES);
-    // Logger.recordOutput("Field/Blue/Upper Shaft Vertices", BlueFieldConstants.UPPER_SHAFT_VERTICES);
-    // Logger.recordOutput("Field/Blue/Classifier", new Translation2d[] {BlueFieldConstants.CLASSIFIER_SOURCE_CORNER, BlueFieldConstants.CLASSIFIER_MINE_CORNER});
-    // Logger.recordOutput("Field/Blue/Classifier Center", BlueFieldConstants.CLASSIFIER_CENTER);
-    // Logger.recordOutput("Field/Blue/Mine", new Translation2d[] {BlueFieldConstants.MINE_CENTER.getTranslation(), BlueFieldConstants.MINE_CENTER_CORNER, BlueFieldConstants.MINE_DS_CORNER});
-    // Logger.recordOutput("Field/Blue/Source", new Translation2d[] {BlueFieldConstants.SOURCE_CENTER.getTranslation(), BlueFieldConstants.SOURCE_DS_CORNER, BlueFieldConstants.SOURCE_WALL_CORNER});
-
+    this.publishOpModes();
   }
 
   @Override
   public void robotPeriodic() {
-    scheduler.run();
-
-    Command[] runningCommands = scheduler.getRunningCommands().toArray(new Command[] {});
+    Command[] runningCommands = Scheduler.getDefault().getRunningCommands().toArray(new Command[] {});
     String[] names = new String[runningCommands.length];
-    for (int i = 0; i < runningCommands.length; i++) {
+    for (int i = 0; i < names.length; i++) {
       names[i] = runningCommands[i].name();
     }
-    
-    Logger.recordOutput("Commands/Running", names);
+    Telemetry.log("Commands/Running", names);
 
-    // outputs important events: non-idle interruptions and errored completions
-    scheduler.addEventListener(event -> {
+    Scheduler.getDefault().addEventListener(event -> {
       String message;
       switch(event) {
-        case CompletedWithError(Command cmd, Error error, long time):
-          message = ((double)Math.round(time / 10000.0) / 100.0) + " | Error with " + cmd.name() + ": " + error.toString();
-          if (!problemCommands.contains(message)) {
-            problemCommands.add(0, message);
-          }
+        case SchedulerEvent.Canceled(Command cmd, long time_ns):
+          message = Seconds.convertFrom(time_ns, Nanoseconds) + ": " + cmd.name() + " cancelled";
+          if(!issues.contains(message)) issues.add(message);
           break;
-        case Interrupted(Command cmd, Command inter, long time):
-          message = ((double)Math.round(time / 10000.0) / 100.0) + " | " + cmd.name() + " interrupted by " + inter.name();
-          if(!cmd.name().contains("[IDLE]") && !problemCommands.contains(message)) {
-            problemCommands.add(0, message);
-          }
+        case SchedulerEvent.Interrupted(Command cmd, Command other, long time_ns):
+          message = Seconds.convertFrom(time_ns, Nanoseconds) + ": " + cmd.name() + " interrupted by " + other.name();
+          if(!issues.contains(message)) issues.add(message);
           break;
-          // cancellations not rly that important but if necessary we can add
-          // case Canceled(Command cmd, long time):
-          //   message = ((double)Math.round(time / 10000.0) / 100.0) + " | " + cmd.name() + " canceled";
-          //   if(!cmd.name().contains("[IDLE]") && !problemCommands.contains(message)) {
-          //     problemCommands.add(0, message);
-          //   }
-          // break;
+        case SchedulerEvent.CompletedWithError(Command cmd, Error e, long time_ns):
+          message = Seconds.convertFrom(time_ns, Nanoseconds) + ": " + cmd.name() + "completed with error " + e.getMessage();
+          if(!issues.contains(message)) issues.add(message);
+        break;
         default:
           break;
       }
     });
+    Telemetry.log("Commands/Issues", issues.toArray(new String[] {}));
 
-    Logger.recordOutput("Commands/Special Events/List", problemCommands.toArray(String[]::new));
-    Logger.recordOutput("Commands/Special Events/Recent ", (problemCommands.size() > 0 ? problemCommands.get(0) : ""));
+    Scheduler.getDefault().run();
   }
 
   @Override
-  public void disabledInit() {
-    scheduler.cancelAll();
-    robotContainer.unbindAll();
+  public void simulationInit() {
+    Scheduler.getDefault().addPeriodic(
+      () -> visualizer.updateVis(
+        telescope.getPivotAngleDeg(),
+        telescope.getArmExtensionInches(),
+        endEffector.getWristAngleDeg(),
+        launcher.getMeanRPS(),
+        endEffector.getRollersRPS()
+      )
+    );
   }
+
+  @Override
+  public void simulationPeriodic() {}
+
+  @Override
+  public void disabledInit() {}
 
   @Override
   public void disabledPeriodic() {}
@@ -116,48 +172,10 @@ public class Robot extends LoggedRobot {
   public void disabledExit() {}
 
   @Override
-  public void autonomousInit() {
-    autonomousCommand = robotContainer.getAutonomousCommand();
+  public void nonePeriodic() {}
 
-    if (autonomousCommand != null) {
-      scheduler.schedule(autonomousCommand);
-    }
+  private OpMode generateAuto(Command autoCommand) {
+    return OpModeContainer.generateAuto(this, autoCommand);
   }
 
-  @Override
-  public void autonomousPeriodic() {}
-
-  @Override
-  public void autonomousExit() {
-    if (autonomousCommand != null) {
-      scheduler.cancel(autonomousCommand);
-    }
-  }
-
-  @Override
-  public void teleopInit() {
-    scheduler.schedule(robotContainer.teleopSM());
-    robotContainer.teleopBindings();
-  }
-
-  @Override
-  public void teleopPeriodic() {
-  }
-
-  @Override
-  public void teleopExit() {
-    scheduler.cancelAll();
-  }
-
-  @Override
-  public void utilityInit() {
-    robotContainer.utilityBindings();
-    // robotContainer.enableAdjustmentBindings();
-  }
-
-  @Override
-  public void utilityPeriodic() {}
-
-  @Override
-  public void utilityExit() {}
 }

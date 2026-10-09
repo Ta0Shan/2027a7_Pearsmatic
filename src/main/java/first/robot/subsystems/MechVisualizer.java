@@ -154,8 +154,6 @@ public class MechVisualizer {
             double launcherRPS,
             double rollersRPS) {
         updateMech(pivotAngleDegs, armExtensionInches, wristAngleDegs, launcherRPS, rollersRPS);
-        Logger.recordOutput("Simulation/2d Visualizer", mech);
-        Logger.recordOutput("Simulation/3d Components", getTransforms());
         Telemetry.log("Simulation/2d Visualizer", mech);
         Telemetry.log("Simulation/3d Transforms", getTransforms());
     }

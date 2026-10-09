@@ -5,6 +5,7 @@ import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLog;
 
 import first.robot.Constants.CrystalColor;
+import first.robot.subsystems.endEffector.EEConstants.EEInputs;
 import first.robot.util.PearadoxTalonFX.MotorData;
 
 public interface EEIO {
@@ -16,7 +17,7 @@ public interface EEIO {
         public CrystalColor colorReading = CrystalColor.NONE;
     }
 
-    public default void updateInputs(EEIOInputs inputs) {}
+    public default EEInputs updateInputs(EEInputs inputs) {return new EEInputs();}
 
     public default void setWristAngleDeg(double angleDeg) {}
 

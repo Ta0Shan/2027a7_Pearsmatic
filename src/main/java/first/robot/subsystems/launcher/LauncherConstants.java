@@ -8,6 +8,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import first.robot.Constants;
+import first.robot.util.PearadoxTalonFX.MotorData;
 
 public class LauncherConstants {
 
@@ -60,4 +61,13 @@ public class LauncherConstants {
 
     // excuse the jank constant its for sim
     public static final double FLYWHEEL_DIST_FROM_STATIC_STAGE_METERS = Units.inchesToMeters(10.985093);
+
+    public final record LauncherInputs(
+        MotorData launcher1Data,
+        MotorData launcher2Data
+    ) {
+        public LauncherInputs() {
+            this(new MotorData(), new MotorData());
+        }
+    }
 }

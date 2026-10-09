@@ -20,6 +20,7 @@ import com.revrobotics.servohub.ServoChannel.ChannelId;
 import first.robot.Constants;
 import first.robot.subsystems.telescope.TelescopeConstants.ArmConstants;
 import first.robot.subsystems.telescope.TelescopeConstants.PivotConstants;
+import first.robot.subsystems.telescope.TelescopeConstants.TelescopeInputs;
 import first.robot.util.PearadoxTalonFX;
 import first.robot.util.PhoenixUtil;
 import first.robot.util.EnergyTracker.Subsystem;
@@ -97,17 +98,16 @@ public abstract class TelescopeIOTalonFX implements TelescopeIO {
         PhoenixUtil.tryUntilOk(5, () -> pivot3.setPosition(absoluteEncoder.getAbsolutePosition().getValueAsDouble() * PivotConstants.REDUCTION));
     }
 
-    public void updateInputs(TelescopeIOInputs inputs) {
-        inputs.pivot1Data = pivot1.getData();
-        inputs.pivot2Data = pivot2.getData();
-        inputs.pivot3Data = pivot3.getData();
-        
-        inputs.pivotAbsEncoderPosition = absoluteEncoder.getAbsolutePosition().getValueAsDouble();
-
-        inputs.arm1Data = arm1.getData();
-        inputs.arm2Data = arm2.getData();
-
-        inputs.armServoAppliedPulseWidth = armServo.getPulseWidth().get();
+    public TelescopeInputs updateInputs() {
+        return new TelescopeInputs(
+            pivot1.getData(),
+            pivot2.getData(),
+            pivot3.getData(),
+            absoluteEncoder.getAbsolutePosition().getValueAsDouble(),
+            arm1.getData(),
+            arm2.getData(),
+            armServo.getPulseWidth().get()    
+        );
     }
 
     public void setPivotAngleDeg(double angleDeg) {

@@ -2,6 +2,7 @@ package first.robot.subsystems.launcher;
 
 import org.littletonrobotics.junction.AutoLog;
 
+import first.robot.subsystems.launcher.LauncherConstants.LauncherInputs;
 import first.robot.util.PearadoxTalonFX.MotorData;
 
 public interface LauncherIO {
@@ -12,7 +13,7 @@ public interface LauncherIO {
         public MotorData launcher2Data;
     }
 
-    public default void updateInputs(LauncherIOInputs inputs) {}
+    public default LauncherInputs updateInputs() {return new LauncherInputs();}
 
     public default void setLauncherRPS(double rps) {}
 
