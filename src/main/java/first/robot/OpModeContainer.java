@@ -9,6 +9,7 @@ import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.opmode.Autonomous;
 import org.wpilib.opmode.OpMode;
 import org.wpilib.opmode.Teleop;
+import org.wpilib.opmode.Utility;
 
 import first.robot.commands.StateMachineManager;
 import first.robot.subsystems.launcher.LauncherConstants.LauncherStates;
@@ -18,31 +19,15 @@ public class OpModeContainer {
     @Teleop
     public static class Comp implements OpMode {
 
-        private final StateMachineManager SMManager;
+        private final Command TeleopSM;
 
-        private final CommandXboxController driver = new CommandXboxController(0);
-        private final CommandXboxController operator = new CommandXboxController(1);
+        private final CommandXboxController driver;
+        private final CommandXboxController operator;
 
         public Comp(Robot r) {
-            SMManager = new StateMachineManager(
-                r.telescope,
-                r.launcher,
-                r.endEffector,
-                r.drive,
-
-                () -> driver.getLeftX(),
-                () -> driver.getLeftY(),
-                () -> driver.getRightX(),
-                driver.a(),
-                driver.leftBumper(),
-                driver.leftTrigger(0.8),
-                driver.x(),
-                driver.y(),
-                driver.b(),
-                driver.dpadUp(),
-                driver.rightBumper(),
-                driver.rightTrigger(0.8)
-            );
+            TeleopSM = r.SMManager.teleop();
+            driver = r.driver;
+            operator = r.operator;
 
             driver.menu().onTrue(Command.requiring(r.drive).executing(co -> {
                 r.drive.setPose(new Pose2d(r.drive.getPose().getTranslation(), new Rotation2d()));
@@ -74,7 +59,9 @@ public class OpModeContainer {
         // public void disabledPeriodic() {}
 
         @Override
-        public void start() {Scheduler.getDefault().schedule(SMManager.teleop());}
+        public void start() {
+            if (!Scheduler.getDefault().isRunning(TeleopSM)) Scheduler.getDefault().schedule(TeleopSM);
+        }
 
         // @Override
         // public void periodic() {}
@@ -86,14 +73,50 @@ public class OpModeContainer {
         // public void close() {}
     }
 
-    public static OpMode generateAuto(Robot r, Command autoCommand) {
-        @Autonomous
-        class Auto implements OpMode {
-            private final Command autoCommand;
-            public Auto(Command autoCommand) {this.autoCommand = autoCommand;}
-            @Override public void start() {Scheduler.getDefault().schedule(autoCommand);}
+    public static class Auto implements OpMode {
+
+        private final Command autoCommand;
+
+        public Auto(Command c) {
+            autoCommand = c;
         }
+
+        @Override public void start() {Scheduler.getDefault().schedule(autoCommand);}
+        @Override public void close() {Scheduler.getDefault().cancel(autoCommand);}
+    }
+
+    public static OpMode generateAuto(Command autoCommand) {
         return new Auto(autoCommand);
+    }
+
+    @Utility
+    public static class Functional implements OpMode {
+        private final Command functionalSM;
+
+        public Functional(Robot r) {
+            functionalSM = r.SMManager.functional();
+        }
+
+        @Override
+        public void start() {Scheduler.getDefault().schedule(functionalSM);}
+
+        @Override
+        public void close() {Scheduler.getDefault().cancel(functionalSM);}
+    }
+
+    @Utility
+    public static class Tuning implements OpMode {
+        private final Command tuningSM;
+
+        public Tuning(Robot r) {
+            tuningSM = r.SMManager.tuning();
+        }
+
+        @Override
+        public void start() {Scheduler.getDefault().schedule(tuningSM);}
+
+        @Override
+        public void close() {Scheduler.getDefault().cancel(tuningSM);}
     }
 
 }

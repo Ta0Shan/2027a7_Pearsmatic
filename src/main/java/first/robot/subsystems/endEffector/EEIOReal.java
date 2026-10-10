@@ -21,14 +21,10 @@ public class EEIOReal extends EEIOTalonFX {
         super();
         colorSensor = new ColorSensorV3(EEConstants.COLOR_SENSOR_PORT);
         colorSensor.configureColorSensor(
+            // bogus constants btw
             ColorSensorResolution.kColorSensorRes20bit,
             ColorSensorMeasurementRate.kColorRate25ms,
             GainFactor.kGain3x);
-    }
-
-    @Override
-    public EEInputs updateInputs(EEInputs inputs) {
-        return super.updateInputs(inputs);
     }
 
     public CrystalColor getColorReading() {
@@ -49,6 +45,11 @@ public class EEIOReal extends EEIOTalonFX {
     /**
      * Calculates a perceptually weighted distance between two colors.
      * Faster than CIELAB conversion, more accurate than raw Euclidean distance.
+     * 
+     * @param c1 the first color to compare.
+     * @param c2 the second color to compare.
+     * 
+     * @return the squared weighted distance between the two colors.
      */
     private static double getWeightedDistance(Color c1, Color c2) {
         long rmean = ((long) c1.red + (long) c2.blue) / 2;

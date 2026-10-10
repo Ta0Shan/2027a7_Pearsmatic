@@ -29,7 +29,6 @@ public class Telescope implements Mechanism {
 
     private TelescopeInputs inputs = new TelescopeInputs();
 
-    // @AutoLogOutput(key="Mechanisms/Telescope/State")
     private TelescopeStates state = TelescopeStates.HOME;
 
     private boolean isClimbing = false;
@@ -37,12 +36,10 @@ public class Telescope implements Mechanism {
     private double rawAngle = 0.0;
     private double angleAdjust = 0.0;
     private double trueAngle = 0.0;
-    // private final LoggedTunableNumber tunableAngle = new LoggedTunableNumber("Telescope/Pivot/Angle Setpoint Deg", 0.0);
     
     private double rawExtension = 0.0;
     private double extensionAdjust = 0.0;
     private double trueExtension = 0.0;
-    // private final LoggedTunableNumber tunableExtension = new LoggedTunableNumber("Telescope/Arm/Extension Setpoint In", 0.0);
 
     private final TunableDouble angleTuner = TunableDouble.createConfig(0.0, TunableConfig.of(
         TunableOption.Polling.GET_ON_CHANGE));
@@ -60,7 +57,7 @@ public class Telescope implements Mechanism {
         inputs = io.updateInputs();
         Telemetry.log("Inputs/Telescope", inputs);
 
-        Telemetry.log("Mechanisms/Telescope State", state.name());
+        Telemetry.log("Mechanisms/States/Telescope", state.name());
 
         Telemetry.log("Mechanisms/Pivot/Raw Setpoint", rawAngle);
         Telemetry.log("Mechanisms/Pivot/Adjust", angleAdjust);
@@ -106,13 +103,8 @@ public class Telescope implements Mechanism {
             // tuning logic, will never complete naturally
             else {
                 while(true) {
-                    // if(tunableAngle.hasChanged(tunableAngle.hashCode())) rawAngle = tunableAngle.get();
-                    // if(tunableExtension.hasChanged(tunableExtension.hashCode())) rawExtension = tunableExtension.get();
-
-                    // if(angleTuner.hasChanged())
-                        rawAngle = angleTuner.get();
-                    // if(extensionTuner.hasChanged())
-                        rawExtension = extensionTuner.get();
+                    rawAngle = angleTuner.get();
+                    rawExtension = extensionTuner.get();
                     trueAngle = Math.clamp(rawAngle + angleAdjust, PivotConstants.MIN_ANGLE_DEG, PivotConstants.MAX_ANGLE_DEG);
                         trueExtension = Math.clamp(rawExtension + extensionAdjust, Units.metersToInches(ArmConstants.MIN_EXTENSION_METERS), Units.metersToInches(ArmConstants.MAX_EXTENSION_METERS));
                     io.setPivotAngleDeg(trueAngle);

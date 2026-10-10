@@ -12,11 +12,17 @@ import java.util.ArrayList;
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Scheduler;
 import org.wpilib.command3.SchedulerEvent;
+import org.wpilib.command3.button.CommandXboxController;
 import org.wpilib.framework.OpModeRobot;
 import org.wpilib.hardware.hal.RobotMode;
 import org.wpilib.opmode.OpMode;
+import org.wpilib.system.RobotController;
 import org.wpilib.telemetry.Telemetry;
+import org.wpilib.util.Alert;
+import org.wpilib.util.Alert.Level;
 
+import first.robot.Constants.CrystalColor;
+import first.robot.commands.StateMachineManager;
 import first.robot.generated.TunerConstants;
 import first.robot.subsystems.MechVisualizer;
 import first.robot.subsystems.drive.Drive;
@@ -37,14 +43,22 @@ import first.robot.subsystems.telescope.Telescope;
 import first.robot.subsystems.telescope.TelescopeIO;
 import first.robot.subsystems.telescope.TelescopeIOReal;
 import first.robot.subsystems.telescope.TelescopeIOSim;
+import first.robot.util.PhoenixUtil;
 
 public class Robot extends OpModeRobot {
+  private final long startTimestamp = RobotController.getMonotonicTime();
   
+  public final CommandXboxController driver = new CommandXboxController(0);
+  public final CommandXboxController operator = new CommandXboxController(1);
+
+  public final CommandXboxController keyboard = new CommandXboxController(2);
+
   public final Drive drive;
   public final Telescope telescope;
   public final EE endEffector;
   public final Launcher launcher;
 
+  public final StateMachineManager SMManager;
   private final MechVisualizer visualizer;
 
   private final ArrayList<String> issues = new ArrayList<String>();
@@ -94,23 +108,44 @@ public class Robot extends OpModeRobot {
         break;
     }
 
+    
+    SMManager = new StateMachineManager(
+        telescope,
+        launcher,
+        endEffector,
+        drive,
+
+        () -> driver.getLeftX(),
+        () -> driver.getLeftY(),
+        () -> driver.getRightX(),
+        driver.a(),
+        driver.leftBumper(),
+        driver.leftTrigger(0.8),
+        driver.x(),
+        driver.y(),
+        driver.b(),
+        driver.dpadUp(),
+        driver.rightBumper(),
+        driver.rightTrigger(0.8)
+    );
+
+
     Scheduler.getDefault().addPeriodic(() -> {
+      PhoenixUtil.refreshAll();
       telescope.logIO();
       launcher.logIO();
       endEffector.logIO();
       drive.periodic();
+      SMManager.logAdditionalData();
     });
-
     visualizer = new MechVisualizer();
 
-    // OpModeContainer.generateAuto(this, Command.noRequirements(co -> {}).named("auto1"));
-    // OpModeContainer.generateAuto(this, Command.noRequirements(co -> {}).named("auto2"));
-    // OpModeContainer.generateAuto(this, Command.noRequirements(co -> {}).named("auto3"));
-    this.addOpMode(RobotMode.AUTONOMOUS, "auto1", () -> generateAuto(Command.noRequirements(co -> {}).named("auto1")));
-    this.addOpMode(RobotMode.AUTONOMOUS, "auto2", () -> generateAuto(Command.noRequirements(co -> {}).named("auto2")));
-    this.addOpMode(RobotMode.AUTONOMOUS, "auto3", () -> generateAuto(Command.noRequirements(co -> {}).named("auto3")));
 
-    this.publishOpModes();
+    addAuto(Command.noRequirements(co -> {}).named("auto1"));
+    addAuto(Command.noRequirements(co -> {}).named("auto2"));
+    addAuto(Command.noRequirements(co -> {}).named("auto3"));
+
+    publishOpModes();
   }
 
   @Override
@@ -124,22 +159,28 @@ public class Robot extends OpModeRobot {
 
     Scheduler.getDefault().addEventListener(event -> {
       String message;
+      // Alert alert;
       switch(event) {
-        case SchedulerEvent.Canceled(Command cmd, long time_ns):
-          message = Seconds.convertFrom(time_ns, Nanoseconds) + ": " + cmd.name() + " cancelled";
-          if(!issues.contains(message)) issues.add(message);
-          break;
         case SchedulerEvent.Interrupted(Command cmd, Command other, long time_ns):
-          message = Seconds.convertFrom(time_ns, Nanoseconds) + ": " + cmd.name() + " interrupted by " + other.name();
-          if(!issues.contains(message)) issues.add(message);
+          // alert = new Alert(Seconds.convertFrom(time_ns, Nanoseconds) + "", other.name() + " interrupted by " + cmd.name(), Level.LOW);
+          message = Seconds.convertFrom(time_ns-startTimestamp, Nanoseconds) + ": " + cmd.name() + " interrupted by " + other.name();
+          if(!issues.contains(message)) issues.addFirst(message);
           break;
         case SchedulerEvent.CompletedWithError(Command cmd, Error e, long time_ns):
-          message = Seconds.convertFrom(time_ns, Nanoseconds) + ": " + cmd.name() + "completed with error " + e.getMessage();
-          if(!issues.contains(message)) issues.add(message);
+          // alert = new Alert(Seconds.convertFrom(time_ns, Nanoseconds) + "", cmd.name() + " completed with error " + e.getLocalizedMessage(), Level.LOW);
+          message = Seconds.convertFrom(time_ns-startTimestamp, Nanoseconds) + ": " + cmd.name() + "completed with error " + e.getMessage();
+          if(!issues.contains(message)) issues.addFirst(message);
         break;
+        // case SchedulerEvent.Canceled(Command cmd, long time_ns):
+        //   // alert = new Alert(Seconds.convertFrom(time_ns, Nanoseconds) + "", cmd.name() + " canceled ", Level.LOW);
+        //   message = Seconds.convertFrom(time_ns, Nanoseconds)/100 + ": " + cmd.name() + " cancelled";
+        //   if(!issues.contains(message)) issues.addFirst(message);
+        //   break;
         default:
+          // alert = null;
           break;
       }
+      // if (alert != null) alert.set(true);
     });
     Telemetry.log("Commands/Issues", issues.toArray(new String[] {}));
 
@@ -157,6 +198,13 @@ public class Robot extends OpModeRobot {
         endEffector.getRollersRPS()
       )
     );
+
+    keyboard.a().and(keyboard.b().negate()).onTrue(endEffector.setCrystalColor(CrystalColor.ORANGE));
+    keyboard.b().and(keyboard.a().negate()).onTrue(endEffector.setCrystalColor(CrystalColor.GREEN));
+    keyboard.x().onTrue(endEffector.setCrystalColor(CrystalColor.YELLOW));
+    keyboard.y().onTrue(endEffector.setCrystalColor(CrystalColor.PURPLE));
+
+    keyboard.a().and(keyboard.b()).onTrue(endEffector.setCrystalColor(CrystalColor.NONE));
   }
 
   @Override
@@ -174,8 +222,8 @@ public class Robot extends OpModeRobot {
   @Override
   public void nonePeriodic() {}
 
-  private OpMode generateAuto(Command autoCommand) {
-    return OpModeContainer.generateAuto(this, autoCommand);
+  private void addAuto(Command autoCommand) {
+    addOpMode(RobotMode.AUTONOMOUS, autoCommand.name(), () -> OpModeContainer.generateAuto(autoCommand));
   }
 
 }

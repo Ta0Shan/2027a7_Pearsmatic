@@ -28,13 +28,13 @@ import org.wpilib.command3.SchedulerEvent.Canceled;
 public class OldRobot extends LoggedRobot {
   private Command autonomousCommand;
 
-  private final RobotContainer robotContainer;
+  private final OldRobotContainer robotContainer;
   private final Scheduler scheduler;
 
   private final List<String> problemCommands;
 
   public OldRobot() {
-    robotContainer = new RobotContainer();
+    robotContainer = new OldRobotContainer();
 
     scheduler = Scheduler.getDefault();
     scheduler.addPeriodic(() -> robotContainer.periodic());

@@ -105,15 +105,7 @@ public class TelescopeIOSim extends TelescopeIOTalonFX {
         // arm1SimState.setRotorVelocity((armPhysicsSim.getVelocity() / ArmConstants.ROTOR_CIRCUMF_METERS) * (isClimbing ? ArmConstants.CLIMB_REDUCTION : ArmConstants.EXTENSION_REDUCTION));
         // arm2SimState.setRotorVelocity((armPhysicsSim.getVelocity() / ArmConstants.ROTOR_CIRCUMF_METERS) * (isClimbing ? ArmConstants.CLIMB_REDUCTION : ArmConstants.EXTENSION_REDUCTION));
 
-        return new TelescopeInputs(
-            pivot1.getData(),
-            pivot2.getData(),
-            pivot3.getData(),
-            absoluteEncoder.getAbsolutePosition().getValueAsDouble(),
-            arm1.getData(),
-            arm2.getData(),
-            0
-        );
+        return super.updateInputs();
 
     }
 

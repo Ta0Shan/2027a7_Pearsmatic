@@ -93,7 +93,7 @@ public class StateMachineManager {
             State CLASSIFIER_FRONT = stateMachine.addState(superstructure.applyState(SuperstructureStates.CLASSIFIER_FRONT)); // arm up forwards, prepped for lower classifier
             State CLASSIFIER_BACK = stateMachine.addState(superstructure.applyState(SuperstructureStates.CLASSIFIER_BACK)); // arm up backwards, prepped for upper classifier
             State CLIMB_RAISED = stateMachine.addState(superstructure.applyState(SuperstructureStates.CLIMB_RAISED)); // arm up 90, prepped for climb
-            State IDLING = stateMachine.addState(superstructure.hold());
+            State IDLING = stateMachine.addState(Command.noRequirements(co -> {co.park();}).named("HOLD"));
 
             // alignment states / in-betweens
             State SHUTTLE_ALIGN = stateMachine.addState(
@@ -103,7 +103,7 @@ public class StateMachineManager {
 
             // scoring states / finals
             State SCORE = stateMachine.addState(superstructure.score());
-            State CLIMB = stateMachine.addState(superstructure.climb());
+            State CLIMB = stateMachine.addState(superstructure.applyState(SuperstructureStates.CLUMB));
 
         // Binding Triggers
             // we will always go to HOME when homeTrigger is triggered
@@ -238,7 +238,7 @@ public class StateMachineManager {
     }
 
     public void logAdditionalData() {
-        Telemetry.log("Mechanisms/Superstructure State", superstructure.getSuperstructureState().name());
+        Telemetry.log("Mechanisms/States/Superstructure", superstructure.getSuperstructureState().name());
         Telemetry.log("Mechanisms/Wrist/Angle From Floor Deg", superstructure.getEEAngleFromFloorDeg());
     }
 

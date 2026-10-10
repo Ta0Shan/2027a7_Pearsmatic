@@ -46,7 +46,7 @@ import first.robot.subsystems.telescope.TelescopeIOSim;
 import first.robot.subsystems.vision.Vision;
 import first.robot.util.PhoenixUtil;
 
-public class RobotContainer {
+public class OldRobotContainer {
 
   public final CommandXboxController driver;
   public final CommandXboxController operator;
@@ -67,7 +67,7 @@ public class RobotContainer {
 
   private final MechVisualizer visualizer2d;
 
-  public RobotContainer() {
+  public OldRobotContainer() {
     driver = new CommandXboxController(0);
     operator = new CommandXboxController(1);
     keyboard = new CommandXboxController(4);

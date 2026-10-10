@@ -17,7 +17,7 @@ public interface EEIO {
         public CrystalColor colorReading = CrystalColor.NONE;
     }
 
-    public default EEInputs updateInputs(EEInputs inputs) {return new EEInputs();}
+    public default EEInputs updateInputs() {return new EEInputs();}
 
     public default void setWristAngleDeg(double angleDeg) {}
 

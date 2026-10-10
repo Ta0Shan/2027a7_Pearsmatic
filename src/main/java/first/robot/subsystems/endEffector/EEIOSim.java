@@ -42,7 +42,7 @@ public class EEIOSim extends EEIOTalonFX {
     }
 
     @Override
-    public EEInputs updateInputs(EEInputs inputs) {
+    public EEInputs updateInputs() {
         wristSimState.setSupplyVoltage(12);
         wristPhysicsSim.setInputVoltage(wristSimState.getMotorVoltage());
 
@@ -61,6 +61,10 @@ public class EEIOSim extends EEIOTalonFX {
         rollerSimState.setRawRotorPosition(Units.radiansToRotations(rollerPosition));
         rollerSimState.setRotorVelocity(Units.radiansToRotations(rollerPhysicsSim.getAngularVelocity()) * EEConstants.ROLLER_REDUCTION);
 
-        return super.updateInputs(inputs);
+        return new EEInputs(
+            wrist.getData(),
+            roller.getData(),
+            EEConstants.simCrystalColor
+        );
     }
 }

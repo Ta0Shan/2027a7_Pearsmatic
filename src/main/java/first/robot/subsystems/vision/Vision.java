@@ -9,7 +9,6 @@ package first.robot.subsystems.vision;
 
 import static first.robot.subsystems.vision.VisionConstants.*;
 
-import first.robot.subsystems.vision.VisionIO.PoseObservationType;
 import java.util.LinkedList;
 import java.util.List;
 import org.littletonrobotics.junction.Logger;
@@ -23,6 +22,9 @@ import org.wpilib.math.numbers.N3;
 import org.wpilib.telemetry.Telemetry;
 import org.wpilib.util.Alert;
 import org.wpilib.util.Alert.Level;
+
+import first.robot.subsystems.vision.VisionIO.PoseObservationType;
+
 import org.wpilib.command3.Mechanism;
 
 public class Vision implements Mechanism {

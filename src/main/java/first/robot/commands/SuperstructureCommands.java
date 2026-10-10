@@ -61,17 +61,17 @@ public class SuperstructureCommands {
     }
 
     public Command applyState(SuperstructureStates state) {
-        return Command.parallel(
-            instantApplyState(state),
-            hold()
-        ).named(instantApplyState(state).name());
+        return Command.noRequirements(co -> {
+            co.await(instantApplyState(state));
+            co.park();
+            }).named(instantApplyState(state).name());
     }
     
     public Command shuttle(Supplier<Double> distance) {
         return Command.requiring(launcher).executing(co -> {
-            co.fork(instantApplyState(SuperstructureStates.LAUNCHER));
+            co.fork(launcher.applyState(launcher.getScoringState()));
             co.awaitAll(
-                telescope.applyState(superstructureState.telescopeState),
+                telescope.applyState(SuperstructureStates.LAUNCHER.telescopeState),
                 launcher.setLauncherRPS(
                     launcher.getState() == LauncherStates.SELF_DIRECTING
                     ? rpsLerp.get(distance.get())
@@ -84,29 +84,12 @@ public class SuperstructureCommands {
     public Command score() {
         return Command.requiring(endEffector).executing(co -> {
             co.fork(endEffector.applyState(superstructureState == SuperstructureStates.LAUNCHER ? RollerStates.FAST_REV : RollerStates.REV));
-            // co.await(pause(0.5));
             Debouncer scoreDebouncer = new Debouncer(0.3, DebounceType.FALLING);
             while(scoreDebouncer.calculate(endEffector.hasCrystal())) {
                 co.yield();
             }
         }).named("SCORE");
     }
-
-    public Command climb() {
-        return Command.requiring(telescope).executing(co -> {
-            co.await(instantApplyState(SuperstructureStates.CLUMB));
-        }).named("CLIMB");
-    }
-
-    public Command hold() {
-        return Command.noRequirements(co -> {
-            // while(true) {
-            //     co.yield();
-            // }
-            co.park();
-        }).named("HOLD");
-    }
-
 
     public SuperstructureStates getSuperstructureState() {
         return superstructureState;

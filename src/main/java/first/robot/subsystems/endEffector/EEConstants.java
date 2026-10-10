@@ -67,6 +67,9 @@ public class EEConstants {
 
     public static final Color[] CRYSTAL_COLORS = {GREEN, YELLOW, ORANGE, PURPLE};
 
+    // not a constant because it needs to change for sim
+    public static CrystalColor simCrystalColor = CrystalColor.NONE;
+
     public static final double WRIST_REDUCTION = (32.0/12.0) * (32.0/12.0) * (50.0/12.0); // (36.0 / 8.0) * (38.0/14.0) * (36.0/14.0) * (20.0/16.0);
     public static final double ROLLER_REDUCTION = (22.0/22.0) * (36.0/16.0);
 
@@ -122,13 +125,4 @@ public class EEConstants {
             this(new MotorData(), new MotorData(), CrystalColor.NONE);
         }
     }
-
-    public static final EEInputs override(EEInputs inputs, CrystalColor override) {
-        return new EEInputs(
-            inputs.wristData(),
-            inputs.rollerData(),
-            override
-        );
-    }
-
 }

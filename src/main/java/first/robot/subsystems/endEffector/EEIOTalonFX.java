@@ -6,6 +6,7 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 
 import first.robot.Constants;
+import first.robot.Constants.CrystalColor;
 import first.robot.subsystems.endEffector.EEConstants.EEInputs;
 import first.robot.util.PearadoxTalonFX;
 import first.robot.util.EnergyTracker.Subsystem;
@@ -31,11 +32,11 @@ public abstract class EEIOTalonFX implements EEIO {
         voltageOut = new VoltageOut(0);
     }
 
-    public EEInputs updateInputs(EEInputs inputs) {
+    public EEInputs updateInputs() {
         return new EEInputs(
             wrist.getData(),
             roller.getData(),
-            inputs.colorReading()
+            getColorReading()
         );
     }
 

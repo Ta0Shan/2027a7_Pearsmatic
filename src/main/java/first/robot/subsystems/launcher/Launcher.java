@@ -9,20 +9,19 @@ import org.wpilib.tunable.Tunable;
 import org.wpilib.tunable.TunableDouble;
 import org.wpilib.tunable.Tunables;
 
-import first.robot.subsystems.launcher.LauncherConstants.LauncherStates;
 import first.robot.subsystems.launcher.LauncherConstants.LauncherInputs;
+import first.robot.subsystems.launcher.LauncherConstants.LauncherStates;
 import first.robot.util.LoggedTunableNumber;
 
 public class Launcher implements Mechanism {
     private final LauncherIO io;
 
     private LauncherStates state = LauncherStates.OFF;
-    private LauncherStates scoringState = LauncherStates.SELF_DIRECTING;
+    private LauncherStates scoringState = LauncherStates.MANUAL;
 
     private double rawMeanTarget = 0.0;
     private double adjust = 0.0;
     private double meanRPSTarget = 0.0;
-    // private final LoggedTunableNumber tunableRPS = new LoggedTunableNumber("Launcher/RPS Setpoint", 0.0);
 
     private double minimumErrorPercent = 0.0;
 
@@ -41,6 +40,9 @@ public class Launcher implements Mechanism {
     public void logIO() {
         inputs = io.updateInputs();
         Telemetry.log("Inputs/Launcher", inputs);
+
+        Telemetry.log("Mechanisms/States/Launcher Current", state);
+        Telemetry.log("Mechanisms/States/Launcher Scoring", scoringState);
 
         Telemetry.log("Mechanisms/Launcher/Raw Setpoint", rawMeanTarget);
         Telemetry.log("Mechanisms/Launcher/Adjust", adjust);
@@ -89,9 +91,7 @@ public class Launcher implements Mechanism {
             if(state == LauncherStates.TUNING) {
                 co.fork(setScoringState(state));
                 while(true) {
-                    // if (tunableRPS.hasChanged(tunableRPS.hashCode())) rawMeanTarget = tunableRPS.get();
-                    // if(rpsTuner.hasChanged())
-                        rawMeanTarget = rpsTuner.get();
+                    rawMeanTarget = rpsTuner.get();
                     meanRPSTarget = Math.clamp(rawMeanTarget + adjust, -LauncherConstants.FLYWHEEL_MAX_SPEED_RPS, LauncherConstants.FLYWHEEL_MAX_SPEED_RPS);
                     io.setLauncherRPS(meanRPSTarget);
                     co.yield();
