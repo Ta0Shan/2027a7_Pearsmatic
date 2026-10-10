@@ -86,8 +86,8 @@ public class Telescope implements Mechanism {
                         trueAngle = Math.clamp(rawAngle + angleAdjust, PivotConstants.MIN_ANGLE_DEG, PivotConstants.MAX_ANGLE_DEG);
                         trueExtension = Math.clamp(rawExtension + extensionAdjust, Units.metersToInches(ArmConstants.MIN_EXTENSION_METERS), Units.metersToInches(ArmConstants.MAX_EXTENSION_METERS));
                 while(setpointDebouncer.calculate(
-                    Math.abs((state.pivotAngleDeg - Units.rotationsToDegrees(inputs.pivotEncoderPosition()))) > 0.5
-                    || Math.abs(getArmSetpoint(state) - getArmExtensionInches()) > 0.05)
+                    Math.abs((trueAngle - Units.rotationsToDegrees(inputs.pivotEncoderPosition()))) > 0.5
+                    || Math.abs(trueExtension - getArmExtensionInches()) > 0.05)
                 ) {
                     // functions as a timer, cmd gives up control when it's close to its setpoint (within 0.5° and 0.05");
                     io.setPivotAngleDeg(trueAngle);
@@ -170,11 +170,6 @@ public class Telescope implements Mechanism {
             //         * ArmConstants.EXTENSION_REDUCTION)
             //     : 0)
         ;
-    }
-
-    private double getArmSetpoint(TelescopeStates state) {
-        // return (state==TelescopeStates.CLUMB ? 2 : state.getArmExtensionInches());
-        return state.armExtensionInches;
     }
 
     private double mean(double... values) {

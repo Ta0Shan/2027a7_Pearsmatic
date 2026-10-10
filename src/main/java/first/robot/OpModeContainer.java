@@ -21,68 +21,53 @@ public class OpModeContainer {
 
         private final Command TeleopSM;
 
-        private final CommandXboxController driver;
-        private final CommandXboxController operator;
-
         public Comp(Robot r) {
             TeleopSM = r.SMManager.teleop();
-            driver = r.driver;
-            operator = r.operator;
 
-            driver.menu().onTrue(Command.requiring(r.drive).executing(co -> {
+            r.driver.menu().onTrue(Command.requiring(r.drive).executing(co -> {
                 r.drive.setPose(new Pose2d(r.drive.getPose().getTranslation(), new Rotation2d()));
             }).named("RESET HEADING"));
 
-            operator.y().onTrue(r.launcher.setScoringState(LauncherStates.SELF_DIRECTING));
-            operator.x().onTrue(r.launcher.setScoringState(LauncherStates.MANUAL));
+            r.operator.y().onTrue(r.launcher.setScoringState(LauncherStates.SELF_DIRECTING));
+            r.operator.x().onTrue(r.launcher.setScoringState(LauncherStates.MANUAL));
 
             // adjustments
-            Trigger operatorLeftYUp = new Trigger(() -> operator.getLeftY() < -0.9);
+            Trigger operatorLeftYUp = new Trigger(() -> r.operator.getLeftY() < -0.9);
             operatorLeftYUp.whileTrue(r.telescope.adjustAngleDeg(10 * r.getPeriod()));
-            Trigger operatorLeftYDown = new Trigger(() -> operator.getLeftY() > 0.9);
+            Trigger operatorLeftYDown = new Trigger(() -> r.operator.getLeftY() > 0.9);
             operatorLeftYDown.whileTrue(r.telescope.adjustAngleDeg(-10 * r.getPeriod()));
-            Trigger operatorRightYUp = new Trigger(() -> operator.getRightY() < -0.9);
+            Trigger operatorRightYUp = new Trigger(() -> r.operator.getRightY() < -0.9);
             operatorRightYUp.whileTrue(r.telescope.adjustExtensionIn(1.5 * r.getPeriod()));
-            Trigger operatorRightYDown = new Trigger(() -> operator.getRightY() > 0.9);
+            Trigger operatorRightYDown = new Trigger(() -> r.operator.getRightY() > 0.9);
             operatorRightYDown.whileTrue(r.telescope.adjustExtensionIn(-1.5 * r.getPeriod()));
 
-            operator.dpadUp().whileTrue(r.endEffector.adjustAngleDeg(10 * r.getPeriod()));
-            operator.dpadDown().whileTrue(r.endEffector.adjustAngleDeg(-10 * r.getPeriod()));
-            operator.dpadRight().whileTrue(r.endEffector.adjustVoltage(0.5 * r.getPeriod()));
-            operator.dpadLeft().whileTrue(r.endEffector.adjustVoltage(-0.5 * r.getPeriod()));
+            r.operator.dpadUp().whileTrue(r.endEffector.adjustAngleDeg(10 * r.getPeriod()));
+            r.operator.dpadDown().whileTrue(r.endEffector.adjustAngleDeg(-10 * r.getPeriod()));
+            r.operator.dpadRight().whileTrue(r.endEffector.adjustVoltage(0.5 * r.getPeriod()));
+            r.operator.dpadLeft().whileTrue(r.endEffector.adjustVoltage(-0.5 * r.getPeriod()));
 
-            operator.rightBumper().whileTrue(r.launcher.adjustRPS(1 * r.getPeriod()));
-            operator.leftBumper().whileTrue(r.launcher.adjustRPS(-1 * r.getPeriod()));
+            r.operator.rightBumper().whileTrue(r.launcher.adjustRPS(1 * r.getPeriod()));
+            r.operator.leftBumper().whileTrue(r.launcher.adjustRPS(-1 * r.getPeriod()));
+
+            // schedules the state machine to start as soon as op mode is selected
+            // if the state machine exits (CLUMB state) you can press xbox to reinitiate it again
+            Scheduler.getDefault().schedule(TeleopSM);
+            r.driver.xbox()
+                    .and(() -> !Scheduler.getDefault().isRunning(TeleopSM))
+                    .onTrue(TeleopSM);
         }
 
-        // @Override
-        // public void disabledPeriodic() {}
-
-        @Override
-        public void start() {
-            if (!Scheduler.getDefault().isRunning(TeleopSM)) Scheduler.getDefault().schedule(TeleopSM);
-        }
-
-        // @Override
-        // public void periodic() {}
-
-        // @Override
-        // public void end() {}
-
-        // @Override
-        // public void close() {}
+        // @Override public void disabledPeriodic() {}
+        // @Override public void start() {}
+        // @Override public void periodic() {}
+        // @Override public void end() {}
+        // @Override public void close() {}
     }
 
     public static class Auto implements OpMode {
-
-        private final Command autoCommand;
-
         public Auto(Command c) {
-            autoCommand = c;
+            Scheduler.getDefault().schedule(c);
         }
-
-        @Override public void start() {Scheduler.getDefault().schedule(autoCommand);}
-        @Override public void close() {Scheduler.getDefault().cancel(autoCommand);}
     }
 
     public static OpMode generateAuto(Command autoCommand) {
@@ -95,28 +80,20 @@ public class OpModeContainer {
 
         public Functional(Robot r) {
             functionalSM = r.SMManager.functional();
+            r.driver.xbox()
+                    .and(() -> !Scheduler.getDefault().isRunning(functionalSM))
+                    .onTrue(functionalSM);
+
+            Scheduler.getDefault().schedule(functionalSM);
         }
 
-        @Override
-        public void start() {Scheduler.getDefault().schedule(functionalSM);}
-
-        @Override
-        public void close() {Scheduler.getDefault().cancel(functionalSM);}
     }
 
     @Utility
     public static class Tuning implements OpMode {
-        private final Command tuningSM;
-
         public Tuning(Robot r) {
-            tuningSM = r.SMManager.tuning();
+            Scheduler.getDefault().schedule(r.SMManager.tuning());
         }
-
-        @Override
-        public void start() {Scheduler.getDefault().schedule(tuningSM);}
-
-        @Override
-        public void close() {Scheduler.getDefault().cancel(tuningSM);}
     }
 
 }

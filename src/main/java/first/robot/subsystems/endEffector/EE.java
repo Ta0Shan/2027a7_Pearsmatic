@@ -5,6 +5,7 @@ import org.littletonrobotics.junction.Logger;
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.math.filter.Debouncer;
+import org.wpilib.math.filter.Debouncer.DebounceType;
 import org.wpilib.math.util.Units;
 import org.wpilib.telemetry.Telemetry;
 import org.wpilib.tunable.TunableDouble;
@@ -71,13 +72,13 @@ public class EE implements Mechanism {
             this.rollerState = rollerState;
             // normal logic, will complete naturally
             if (!(wristState == WristStates.TUNING) && !(rollerState == RollerStates.TUNING)) {
-                Debouncer setpointDebouncer = new Debouncer(0.2);
+                Debouncer setpointDebouncer = new Debouncer(0.2, DebounceType.FALLING);
                     rawAngle = wristState.angleDeg;
                     rawVoltage = rollerState.voltage;
                         trueAngle = Math.clamp(rawAngle + angleAdjust, EEConstants.MIN_ANGLE_DEG, EEConstants.MAX_ANGLE_DEG);
                         trueVoltage = (rollerState==RollerStates.IDLE ? 0.0 : Math.clamp(rawVoltage + voltageAdjust, -12, 12));
                 while(setpointDebouncer.calculate(
-                    Math.abs(wristState.angleDeg - Units.rotationsToDegrees(inputs.wristData().position()) / EEConstants.WRIST_REDUCTION) > 0.5)
+                    Math.abs(trueAngle - Units.rotationsToDegrees(inputs.wristData().position()) / EEConstants.WRIST_REDUCTION) > 0.5)
                 ) {
                     // functions as a timer, cmd gives up control when it's close to its setpoint (within 0.5°)
                     io.setWristAngleDeg(trueAngle);

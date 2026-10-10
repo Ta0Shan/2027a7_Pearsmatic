@@ -103,7 +103,7 @@ public class StateMachineManager {
 
             // scoring states / finals
             State SCORE = stateMachine.addState(superstructure.score());
-            State CLIMB = stateMachine.addState(superstructure.applyState(SuperstructureStates.CLUMB));
+            State CLIMB = stateMachine.addState(superstructure.instantApplyState(SuperstructureStates.CLUMB));
 
         // Binding Triggers
             // we will always go to HOME when homeTrigger is triggered
@@ -218,11 +218,11 @@ public class StateMachineManager {
             superstructure.instantApplyState(SuperstructureStates.CLUMB)
         ).withAutomaticName());
 
-        functional.setInitialState(DRIVE_CIRCLE);
-        // functional.setInitialState(INTAKE_OUTTAKE);
+        // functional.setInitialState(DRIVE_CIRCLE);
+        functional.setInitialState(INTAKE_OUTTAKE);
 
-        DRIVE_CIRCLE.switchTo(SPIN).whenComplete();
-        SPIN.switchTo(INTAKE_OUTTAKE).whenComplete();
+        // DRIVE_CIRCLE.switchTo(SPIN).whenComplete();
+        // SPIN.switchTo(INTAKE_OUTTAKE).whenComplete();
         INTAKE_OUTTAKE.switchTo(L1_FRONT_BACK).whenComplete();
         L1_FRONT_BACK.switchTo(L2_FRONT_BACK).whenComplete();
         L2_FRONT_BACK.switchTo(CLASSIFIER_FRONT_BACK).whenComplete();

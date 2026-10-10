@@ -64,7 +64,7 @@ public class SuperstructureCommands {
         return Command.noRequirements(co -> {
             co.await(instantApplyState(state));
             co.park();
-            }).named(instantApplyState(state).name());
+            }).named("HOLD " + state.name());
     }
     
     public Command shuttle(Supplier<Double> distance) {
