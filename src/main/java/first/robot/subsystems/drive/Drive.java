@@ -19,6 +19,8 @@ import static org.wpilib.units.Units.*;
 import first.robot.Constants;
 import first.robot.Constants.Mode;
 import first.robot.generated.TunerConstants;
+import first.robot.subsystems.drive.DriveConstants.GyroInputs;
+
 // import first.robot.util.LocalADStarAK;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -47,16 +49,6 @@ import org.wpilib.driverstation.internal.DriverStationBackend;
 import org.wpilib.driverstation.Alliance; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they update the vendordep
 
 public class Drive implements Mechanism {
-  // TunerConstants doesn't include these constants, so they are declared locally
-  static final double ODOMETRY_FREQUENCY = TunerConstants.kCANBus.isNetworkFD() ? 250.0 : 100.0;
-  public static final double DRIVE_BASE_RADIUS =
-      Math.max(
-          Math.max(
-              Math.hypot(TunerConstants.FrontLeft.LocationX, TunerConstants.FrontLeft.LocationY),
-              Math.hypot(TunerConstants.FrontRight.LocationX, TunerConstants.FrontRight.LocationY)),
-          Math.max(
-              Math.hypot(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
-              Math.hypot(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)));
 
   // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific
   // PathPlanner config constants
@@ -79,7 +71,7 @@ public class Drive implements Mechanism {
 
   static final Lock odometryLock = new ReentrantLock();
   private final GyroIO gyroIO;
-  private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
+  private GyroInputs gyroInputs = new GyroInputs();
   private final Module[] modules = new Module[4]; // FL, FR, BL, BR
   // private final SysIdRoutine sysId;
   private final Alert gyroDisconnectedAlert =
@@ -150,8 +142,9 @@ public class Drive implements Mechanism {
 
   public void periodic() {
     odometryLock.lock(); // Prevents odometry updates while reading data
-    gyroIO.updateInputs(gyroInputs);
-    Logger.processInputs("Drive/Gyro", gyroInputs);
+    gyroInputs = gyroIO.updateInputs();
+    // Logger.processInputs("Drive/Gyro", gyroInputs);
+    Telemetry.log("Inputs/Gyro", gyroInputs);
     for (var module : modules) {
       module.periodic();
     }
@@ -189,9 +182,9 @@ public class Drive implements Mechanism {
       }
 
       // Update gyro angle
-      if (gyroInputs.connected) {
+      if (gyroInputs.isConnected()) {
         // Use the real gyro angle
-        rawGyroRotation = gyroInputs.odometryYawPositions[i];
+        rawGyroRotation = gyroInputs.odometryYawPositions()[i];
       } else {
         // Use the angle delta from the kinematics and module deltas
         Twist2d twist = kinematics.toTwist2d(moduleDeltas);
@@ -203,7 +196,7 @@ public class Drive implements Mechanism {
     }
 
     // Update gyro alert
-    gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
+    gyroDisconnectedAlert.set(!gyroInputs.isConnected() && Constants.currentMode != Mode.SIM);
   }
 
   /**
@@ -342,7 +335,7 @@ public class Drive implements Mechanism {
 
   /** Returns the maximum angular speed in radians per sec. */
   public double getMaxAngularSpeedRadPerSec() {
-    return getMaxLinearSpeedMetersPerSec() / DRIVE_BASE_RADIUS;
+    return getMaxLinearSpeedMetersPerSec() / DriveConstants.DRIVE_BASE_RADIUS;
   }
 
   /** Returns an array of module translations. */

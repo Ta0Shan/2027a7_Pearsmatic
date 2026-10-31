@@ -10,6 +10,8 @@ package first.robot.subsystems.drive;
 import org.littletonrobotics.junction.AutoLog;
 import org.wpilib.math.geometry.Rotation2d;
 
+import first.robot.subsystems.drive.DriveConstants.ModuleInputs;
+
 public interface ModuleIO {
   @AutoLog
   public static class ModuleIOInputs {
@@ -33,7 +35,7 @@ public interface ModuleIO {
   }
 
   /** Updates the set of loggable inputs. */
-  public default void updateInputs(ModuleIOInputs inputs) {}
+  public default ModuleInputs updateInputs() {return new ModuleInputs();}
 
   /** Run the drive motor at the specified open loop value. */
   public default void setDriveOpenLoop(double output) {}

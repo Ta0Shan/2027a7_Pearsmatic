@@ -11,6 +11,7 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 
+import first.robot.subsystems.drive.DriveConstants.ModuleInputs;
 import first.robot.util.EnergyTracker;
 import first.robot.util.EnergyTracker.Subsystem;
 
@@ -20,12 +21,13 @@ import org.wpilib.math.kinematics.SwerveModulePosition;
 import org.wpilib.math.kinematics.SwerveModuleVelocity;
 import org.wpilib.math.util.Units;
 import org.wpilib.system.RobotController;
+import org.wpilib.telemetry.Telemetry;
 import org.wpilib.util.Alert;
 import org.wpilib.util.Alert.Level;
 
 public class Module {
   private final ModuleIO io;
-  private final ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
+  private ModuleInputs inputs = new ModuleInputs();
   private final int index;
   private final SwerveModuleConstants<
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
@@ -66,38 +68,39 @@ public class Module {
   }
 
   public void periodic() {
-    io.updateInputs(inputs);
-    Logger.processInputs("Drive/Module" + Integer.toString(index), inputs);
+    inputs = io.updateInputs();
+    // Logger.processInputs("Drive/Module" + Integer.toString(index), inputs);
+    Telemetry.log("Inputs/Module " + Integer.toString(index), inputs);
 
     // Calculate positions for odometry
-    int sampleCount = inputs.odometryTimestamps.length; // All signals are sampled together
+    int sampleCount = inputs.odometryTimestamps().length; // All signals are sampled together
     odometryPositions = new SwerveModulePosition[sampleCount];
     for (int i = 0; i < sampleCount; i++) {
-      double positionMeters = inputs.odometryDrivePositionsRad[i] * constants.WheelRadius;
-      Rotation2d angle = inputs.odometryTurnPositions[i];
+      double positionMeters = inputs.odometryDrivePositionsRad()[i] * constants.WheelRadius;
+      Rotation2d angle = inputs.odometryTurnPositions()[i];
       odometryPositions[i] = new SwerveModulePosition(positionMeters, angle);
     }
 
     // Update alerts
-    driveDisconnectedAlert.set(!inputs.driveConnected);
-    turnDisconnectedAlert.set(!inputs.turnConnected);
-    turnEncoderDisconnectedAlert.set(!inputs.turnEncoderConnected);
+    driveDisconnectedAlert.set(!inputs.driveConnected());
+    turnDisconnectedAlert.set(!inputs.turnConnected());
+    turnEncoderDisconnectedAlert.set(!inputs.turnEncoderConnected());
 
     double newTimestamp = RobotController.getTime();
     double deltaHours = (newTimestamp - lastTimestamp) / 3.6e9;
     lastTimestamp = newTimestamp;
 
     EnergyTracker.reportCurrentUsage(
-        deltaHours, Subsystem.DRIVE, inputs.driveCurrentAmps);
+        deltaHours, Subsystem.DRIVE, inputs.driveCurrentAmps());
     EnergyTracker.reportCurrentUsage(
-        deltaHours, Subsystem.STEER, inputs.turnCurrentAmps);
+        deltaHours, Subsystem.STEER, inputs.turnCurrentAmps());
   }
 
   /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
   public void runSetpoint(SwerveModuleVelocity state) {
     // Optimize velocity setpoint
     state = state.optimize(getAngle());
-    state = state.cosineScale(inputs.turnPosition);
+    state = state.cosineScale(inputs.turnPosition());
 
     // Apply setpoints
     io.setDriveVelocity(state.velocity / constants.WheelRadius);
@@ -118,17 +121,17 @@ public class Module {
 
   /** Returns the current turn angle of the module. */
   public Rotation2d getAngle() {
-    return inputs.turnPosition;
+    return inputs.turnPosition();
   }
 
   /** Returns the current drive position of the module in meters. */
   public double getPositionMeters() {
-    return inputs.drivePositionRad * constants.WheelRadius;
+    return inputs.drivePositionRad() * constants.WheelRadius;
   }
 
   /** Returns the current drive velocity of the module in meters per second. */
   public double getVelocityMetersPerSec() {
-    return inputs.driveVelocityRadPerSec * constants.WheelRadius;
+    return inputs.driveVelocityRadPerSec() * constants.WheelRadius;
   }
 
   /** Returns the module position (turn angle and drive position). */
@@ -148,16 +151,16 @@ public class Module {
 
   /** Returns the timestamps of the samples received this cycle. */
   public double[] getOdometryTimestamps() {
-    return inputs.odometryTimestamps;
+    return inputs.odometryTimestamps();
   }
 
   /** Returns the module position in radians. */
   public double getWheelRadiusCharacterizationPosition() {
-    return inputs.drivePositionRad;
+    return inputs.drivePositionRad();
   }
 
   /** Returns the module velocity in rotations/sec (Phoenix native units). */
   public double getFFCharacterizationVelocity() {
-    return Units.radiansToRotations(inputs.driveVelocityRadPerSec);
+    return Units.radiansToRotations(inputs.driveVelocityRadPerSec());
   }
 }

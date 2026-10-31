@@ -9,6 +9,9 @@ import static org.wpilib.units.Units.Seconds;
 
 import java.util.ArrayList;
 
+import org.littletonrobotics.junction.LoggedOpModeRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Scheduler;
 import org.wpilib.command3.SchedulerEvent;
@@ -45,7 +48,7 @@ import first.robot.subsystems.telescope.TelescopeIOReal;
 import first.robot.subsystems.telescope.TelescopeIOSim;
 import first.robot.util.PhoenixUtil;
 
-public class Robot extends OpModeRobot {
+public class Robot extends LoggedOpModeRobot {
   private final long startTimestamp = RobotController.getMonotonicTime();
   
   public final CommandXboxController driver = new CommandXboxController(0);
@@ -146,6 +149,9 @@ public class Robot extends OpModeRobot {
     addAuto(Command.noRequirements(co -> {}).named("auto3"));
 
     publishOpModes();
+
+    Logger.addDataReceiver(new NT4Publisher());
+    Logger.start();    
   }
 
   @Override

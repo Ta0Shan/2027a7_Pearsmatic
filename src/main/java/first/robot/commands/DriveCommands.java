@@ -33,6 +33,7 @@ import first.robot.Constants.SuperstructureStates;
 import first.robot.Constants.FieldConstants.BlueFieldConstants;
 import first.robot.Constants.FieldConstants.RedFieldConstants;
 import first.robot.subsystems.drive.Drive;
+import first.robot.subsystems.drive.DriveConstants;
 import first.robot.util.LoggedTunableNumber;
 
 import static org.wpilib.units.Units.Seconds;
@@ -512,7 +513,7 @@ public class DriveCommands {
             for (int i = 0; i < 4; i++) {
                 wheelDelta += Math.abs(positions[i] - state.positions[i]) / 4.0;
             }
-            double wheelRadius = (state.gyroDelta * Drive.DRIVE_BASE_RADIUS) / wheelDelta;
+            double wheelRadius = (state.gyroDelta * DriveConstants.DRIVE_BASE_RADIUS) / wheelDelta;
 
             NumberFormat formatter = new DecimalFormat("#0.000");
             System.out.println(

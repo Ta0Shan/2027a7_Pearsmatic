@@ -10,6 +10,8 @@ package first.robot.subsystems.drive;
 import org.littletonrobotics.junction.AutoLog;
 import org.wpilib.math.geometry.Rotation2d;
 
+import first.robot.subsystems.drive.DriveConstants.GyroInputs;
+
 public interface GyroIO {
   @AutoLog
   public static class GyroIOInputs {
@@ -20,5 +22,5 @@ public interface GyroIO {
     public Rotation2d[] odometryYawPositions = new Rotation2d[] {};
   }
 
-  public default void updateInputs(GyroIOInputs inputs) {}
+  public default GyroInputs updateInputs() {return new GyroInputs();}
 }

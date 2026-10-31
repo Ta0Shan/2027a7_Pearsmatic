@@ -13,6 +13,9 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import first.robot.generated.TunerConstants;
+import first.robot.subsystems.drive.DriveConstants.GyroInputs;
+
+import java.util.LinkedList;
 import java.util.Queue;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.util.Units;
@@ -36,7 +39,7 @@ public class GyroIOPigeon2 implements GyroIO {
     }
 
     pigeon.getConfigurator().setYaw(0.0);
-    yaw.setUpdateFrequency(Drive.ODOMETRY_FREQUENCY);
+    yaw.setUpdateFrequency(DriveConstants.ODOMETRY_FREQUENCY);
     yawVelocity.setUpdateFrequency(50.0);
     pigeon.optimizeBusUtilization();
     yawTimestampQueue = PhoenixOdometryThread.getInstance().makeTimestampQueue();
@@ -44,18 +47,17 @@ public class GyroIOPigeon2 implements GyroIO {
   }
 
   @Override
-  public void updateInputs(GyroIOInputs inputs) {
-    inputs.connected = BaseStatusSignal.refreshAll(yaw, yawVelocity).equals(StatusCode.OK);
-    inputs.yawPosition = Rotation2d.fromDegrees(yaw.getValueAsDouble());
-    inputs.yawVelocityRadPerSec = Units.degreesToRadians(yawVelocity.getValueAsDouble());
-
-    inputs.odometryYawTimestamps =
-        yawTimestampQueue.stream().mapToDouble((Double value) -> value).toArray();
-    inputs.odometryYawPositions =
-        yawPositionQueue.stream()
+  public GyroInputs updateInputs() {
+    Queue<Double> timestamps = new LinkedList<Double>(yawTimestampQueue); yawTimestampQueue.clear();
+    Queue<Double> positions = new LinkedList<Double>(yawPositionQueue); yawPositionQueue.clear();
+    return new GyroInputs(
+    BaseStatusSignal.refreshAll(yaw, yawVelocity).equals(StatusCode.OK),
+    Rotation2d.fromDegrees(yaw.getValueAsDouble()),
+    Units.degreesToRadians(yawVelocity.getValueAsDouble()),
+    timestamps.stream().mapToDouble((Double value) -> value).toArray(),
+    positions.stream()
             .map((Double value) -> Rotation2d.fromDegrees(value))
-            .toArray(Rotation2d[]::new);
-    yawTimestampQueue.clear();
-    yawPositionQueue.clear();
+            .toArray(Rotation2d[]::new)
+    );
   }
 }
