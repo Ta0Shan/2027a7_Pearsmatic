@@ -1,12 +1,23 @@
 package first.robot.subsystems.drive;
 
+import static org.wpilib.units.Units.Second;
+import static org.wpilib.units.Units.Volts;
+
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.math.util.Units;
+import org.wpilib.units.VoltageUnit;
+import org.wpilib.units.measure.Time;
+import org.wpilib.units.measure.Velocity;
+import org.wpilib.units.measure.Voltage;
 
 import first.robot.generated.TunerConstants;
 
 public class DriveConstants {
+
+    public static final Velocity<VoltageUnit> SYSID_QUASI_RAMP_RATE = Volts.of(0.1).per(Second);
+    public static final Voltage SYSID_DYNAM_STEP_VOLTAGE = Volts.of(7);
+    public static final Time SYSID_SAFETY_TIMEOUT = Second.of(10);
 
     // TunerConstants doesn't include these constants, so they are declared locally
     public static final double ODOMETRY_FREQUENCY = TunerConstants.kCANBus.isNetworkFD() ? 250.0 : 100.0;

@@ -9,19 +9,19 @@ package first.robot.subsystems.drive;
 
 import static org.wpilib.units.Units.*;
 
-// import com.pathplanner.lib.auto.AutoBuilder; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they add a version for cmdv3 somehow
-// import com.pathplanner.lib.config.ModuleConfig;
-// import com.pathplanner.lib.config.PIDConstants; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they add a version for cmdv3 somehow
-// import com.pathplanner.lib.config.RobotConfig;
-// import com.pathplanner.lib.controllers.PPHolonomicDriveController; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they add a version for cmdv3 somehow
-// import com.pathplanner.lib.pathfinding.Pathfinding;
-// import com.pathplanner.lib.util.PathPlannerLogging;
+import com.pathplanner.lib.auto.AutoBuilder; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they add a version for cmdv3 somehow
+import com.pathplanner.lib.config.ModuleConfig;
+import com.pathplanner.lib.config.PIDConstants; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they add a version for cmdv3 somehow
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController; // AutoBuilder for Pathplanner requires a Subsystem which is cmdv2 specific, hopefully they add a version for cmdv3 somehow
+import com.pathplanner.lib.pathfinding.Pathfinding;
+import com.pathplanner.lib.util.PathPlannerLogging;
 import first.robot.Constants;
 import first.robot.Constants.Mode;
 import first.robot.generated.TunerConstants;
 import first.robot.subsystems.drive.DriveConstants.GyroInputs;
 
-// import first.robot.util.LocalADStarAK;
+import first.robot.util.LocalADStarAK;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -42,7 +42,8 @@ import org.wpilib.math.numbers.N3;
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.telemetry.Telemetry;
 import org.wpilib.command3.Mechanism;
-import org.wpilib.command3.Command; // sysId doesn't exist in cmdv3 so all the commands to run sysId are commented out, hopefully they add sysId or a replacement
+import org.wpilib.command3.sysid.SysIdRoutine;
+import org.wpilib.command3.Command;
 import org.wpilib.util.Alert;
 import org.wpilib.util.Alert.Level;
 import org.wpilib.driverstation.internal.DriverStationBackend;
@@ -73,7 +74,7 @@ public class Drive implements Mechanism {
   private final GyroIO gyroIO;
   private GyroInputs gyroInputs = new GyroInputs();
   private final Module[] modules = new Module[4]; // FL, FR, BL, BR
-  // private final SysIdRoutine sysId;
+  private final SysIdRoutine sysId;
   private final Alert gyroDisconnectedAlert =
       new Alert("GyroDisconnect","Disconnected gyro, using kinematics as fallback.", Level.HIGH);
 
@@ -129,15 +130,15 @@ public class Drive implements Mechanism {
     //     });
 
     // Configure SysId
-    // sysId =
-    //     new SysIdRoutine(
-    //         new SysIdRoutine.Config(
-    //             null,
-    //             null,
-    //             null,
-    //             (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
-    //         new SysIdRoutine.Mechanism(
-    //             (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
+    sysId =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                DriveConstants.SYSID_QUASI_RAMP_RATE,
+                DriveConstants.SYSID_DYNAM_STEP_VOLTAGE,
+                DriveConstants.SYSID_SAFETY_TIMEOUT,
+                (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
+            new SysIdRoutine.SysIdMechanism(
+                (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
   }
 
   public void periodic() {
@@ -248,17 +249,23 @@ public class Drive implements Mechanism {
       stop();
   }
 
-  // /** Returns a command to run a quasistatic test in the specified direction. */
-  // public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-  //   return run(() -> runCharacterization(0.0))
-  //       .withTimeout(1.0)
-  //       .andThen(sysId.quasistatic(direction));
-  // }
+  /** Returns a command to run a quasistatic test in the specified direction. */
+  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+    return run(co -> {
+      runCharacterization(0.0);
+      co.wait(Seconds.of(1.0));
+      co.await(sysId.quasistatic(direction));
+    }).named("SYSID QUASISTATIC");
+  }
 
   /** Returns a command to run a dynamic test in the specified direction. */
-  // public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-  //   return run(() -> runCharacterization(0.0)).withTimeout(1.0).andThen(sysId.dynamic(direction));
-  // }
+  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+    return run(co -> {
+      runCharacterization(0.0);
+      co.wait(Seconds.of(1.0));
+      co.await(sysId.dynamic(direction));
+    }).named("SYSID DYNAMIC");
+  }
 
   /** Returns the module velocities (turn angles and drive speeds) for all of the modules. */
   @AutoLogOutput(key = "SwerveVelocities/Measured")

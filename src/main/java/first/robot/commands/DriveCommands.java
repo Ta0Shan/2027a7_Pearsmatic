@@ -22,7 +22,9 @@ import org.wpilib.driverstation.Alliance;
 import org.wpilib.system.Timer;
 import org.wpilib.telemetry.Telemetry;
 import org.wpilib.tunable.Tunable;
+import org.wpilib.tunable.TunableConfig;
 import org.wpilib.tunable.TunableDouble;
+import org.wpilib.tunable.TunableOption;
 import org.wpilib.tunable.Tunables;
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.command3.Command;
@@ -100,6 +102,10 @@ public class DriveCommands {
         return new Pose2d(Translation2d.ZERO, linearDirection)
         .transformBy(new Transform2d(linearMagnitude, 0.0, Rotation2d.ZERO))
         .getTranslation();
+    }
+
+    public void setDriveDefaultCommand(Command cmd) {
+        drive.setDefaultCommand(cmd);
     }
 
     /**
@@ -455,10 +461,13 @@ public class DriveCommands {
             double kS = (sumY * sumX2 - sumX * sumXY) / (n * sumX2 - sumX * sumX);
             double kV = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
 
-            NumberFormat formatter = new DecimalFormat("#0.00000");
-            System.out.println("********** Drive FF Characterization Results **********");
-            System.out.println("\tkS: " + formatter.format(kS));
-            System.out.println("\tkV: " + formatter.format(kV));
+            Tunables.publish("FF Characterization/kS", TunableDouble.createConfig(kS, TunableConfig.of(TunableOption.IMMUTABLE)));
+            Tunables.publish("FF Characterization/kV", TunableDouble.createConfig(kV, TunableConfig.of(TunableOption.IMMUTABLE)));
+
+            // NumberFormat formatter = new DecimalFormat("#0.00000");
+            // System.out.println("********** Drive FF Characterization Results **********");
+            // System.out.println("\tkS: " + formatter.format(kS));
+            // System.out.println("\tkV: " + formatter.format(kV));
         })
         .named("FF CHARACTERIZATION");
     }
@@ -515,19 +524,24 @@ public class DriveCommands {
             }
             double wheelRadius = (state.gyroDelta * DriveConstants.DRIVE_BASE_RADIUS) / wheelDelta;
 
-            NumberFormat formatter = new DecimalFormat("#0.000");
-            System.out.println(
-                "********** Wheel Radius Characterization Results **********");
-            System.out.println(
-                "\tWheel Delta: " + formatter.format(wheelDelta) + " radians");
-            System.out.println(
-                "\tGyro Delta: " + formatter.format(state.gyroDelta) + " radians");
-            System.out.println(
-                "\tWheel Radius: "
-                + formatter.format(wheelRadius)
-                + " meters, "
-                + formatter.format(Units.metersToInches(wheelRadius))
-                + " inches");
+            Tunables.publish("Radius Characterization/Wheel Delta Rad", TunableDouble.createConfig(wheelDelta, TunableConfig.of(TunableOption.IMMUTABLE)));
+            Tunables.publish("Radius Characterization/Gyro Delta Rad", TunableDouble.createConfig(state.gyroDelta, TunableConfig.of(TunableOption.IMMUTABLE)));
+            Tunables.publish("Radius Characterization/Wheel Radius in", TunableDouble.createConfig(Units.metersToInches(wheelRadius), TunableConfig.of(TunableOption.IMMUTABLE)));
+
+            // NumberFormat formatter = new DecimalFormat("#0.000");
+            
+            // System.out.println(
+            //     "********** Wheel Radius Characterization Results **********");
+            // System.out.println(
+            //     "\tWheel Delta: " + formatter.format(wheelDelta) + " radians");
+            // System.out.println(
+            //     "\tGyro Delta: " + formatter.format(state.gyroDelta) + " radians");
+            // System.out.println(
+            //     "\tWheel Radius: "
+            //     + formatter.format(wheelRadius)
+            //     + " meters, "
+            //     + formatter.format(Units.metersToInches(wheelRadius))
+            //     + " inches");
         })
         .named("WHEEL RADIUS CHARACTERIZATION");
     }

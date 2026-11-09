@@ -11,7 +11,6 @@ import org.wpilib.opmode.OpMode;
 import org.wpilib.opmode.Teleop;
 import org.wpilib.opmode.Utility;
 
-import first.robot.commands.StateMachineManager;
 import first.robot.subsystems.launcher.LauncherConstants.LauncherStates;
 
 public class OpModeContainer {
@@ -48,26 +47,26 @@ public class OpModeContainer {
 
             r.operator.rightBumper().whileTrue(r.launcher.adjustRPS(1 * r.getPeriod()));
             r.operator.leftBumper().whileTrue(r.launcher.adjustRPS(-1 * r.getPeriod()));
-
-            // schedules the state machine to start as soon as op mode is selected
-            // if the state machine exits (CLUMB state) you can press xbox to reinitiate it again
-            Scheduler.getDefault().schedule(TeleopSM);
-            r.driver.xbox()
-                    .and(() -> !Scheduler.getDefault().isRunning(TeleopSM))
-                    .onTrue(TeleopSM);
         }
 
         // @Override public void disabledPeriodic() {}
-        // @Override public void start() {}
+        @Override public void start() {
+            Scheduler.getDefault().schedule(TeleopSM);
+            // TODO: figure out why this one runs while disabled? probably bc it PARKs a command?
+            // it doesn't mess up functionality because one state machine ends up cancelling the rest and so when an input happens there's only one response but still
+        }
         // @Override public void periodic() {}
         // @Override public void end() {}
         // @Override public void close() {}
     }
 
     public static class Auto implements OpMode {
+        private final Command auto;
         public Auto(Command c) {
-            Scheduler.getDefault().schedule(c);
+            auto = c;
         }
+
+        @Override public void start() {Scheduler.getDefault().schedule(auto);}
     }
 
     public static OpMode generateAuto(Command autoCommand) {
@@ -80,20 +79,44 @@ public class OpModeContainer {
 
         public Functional(Robot r) {
             functionalSM = r.SMManager.functional();
-            r.driver.xbox()
-                    .and(() -> !Scheduler.getDefault().isRunning(functionalSM))
-                    .onTrue(functionalSM);
-
-            Scheduler.getDefault().schedule(functionalSM);
         }
+
+        @Override public void start() {Scheduler.getDefault().schedule(functionalSM);}
 
     }
 
     @Utility
     public static class Tuning implements OpMode {
+        private final Command tuningSM;
+
         public Tuning(Robot r) {
-            Scheduler.getDefault().schedule(r.SMManager.tuning());
+            tuningSM = r.SMManager.tuning();
         }
+
+        @Override public void start() {Scheduler.getDefault().schedule(tuningSM);}
+    }
+
+    @Utility
+    public static class CharacterizeFF implements OpMode {
+        private final Command characterization;
+        
+        public CharacterizeFF(Robot r) {
+            characterization = r.SMManager.ffCharacterization();
+        }
+
+        @Override public void start() {Scheduler.getDefault().schedule(characterization);}
+        
+    }
+
+    @Utility
+    public static class CharacterizeWheels implements OpMode {
+        private final Command characterization;
+        
+        public CharacterizeWheels(Robot r) {
+            characterization = r.SMManager.wheelRadiusCharacterization();
+        }
+
+        @Override public void start() {Scheduler.getDefault().schedule(characterization);}
     }
 
 }

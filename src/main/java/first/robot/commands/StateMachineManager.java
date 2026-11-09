@@ -5,6 +5,7 @@
 package first.robot.commands;
 
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.command3.Command;
@@ -24,6 +25,10 @@ public class StateMachineManager {
 
     private final SuperstructureCommands superstructure;
     private final DriveCommands drivetrain;
+
+    private final DoubleSupplier throttleX;
+    private final DoubleSupplier throttleY;
+    private final DoubleSupplier twist;
 
     // Button triggers
     private final Trigger homeTrigger;
@@ -63,7 +68,9 @@ public class StateMachineManager {
         superstructure = new SuperstructureCommands(telescope, launcher, endEffector);
         drivetrain = new DriveCommands(drive);
 
-        drive.setDefaultCommand(drivetrain.joystickDrive(throttleX, throttleY, twist));
+        this.throttleX = throttleX;
+        this.throttleY = throttleY;
+        this.twist = twist;
 
         homeTrigger = home;
         intakeTrigger = intake;
@@ -79,6 +86,9 @@ public class StateMachineManager {
     }
 
     public StateMachine teleop() {
+
+        drivetrain.setDriveDefaultCommand(drivetrain.joystickDrive(throttleX, throttleY, twist));
+
         // Defining States
             StateMachine stateMachine = new StateMachine("TELE-OP");
 
@@ -106,9 +116,8 @@ public class StateMachineManager {
             State CLIMB = stateMachine.addState(superstructure.instantApplyState(SuperstructureStates.CLUMB));
 
         // Binding Triggers
-            // we will always go to HOME when homeTrigger is triggered
             stateMachine.setInitialState(HOME);
-
+        
             // HOME, INTAKE, and OUTTAKE can freely switch to each other
             stateMachine.switchFromAny(HOME, OUTTAKING).to(INTAKING).when(intakeTrigger);
             stateMachine.switchFromAny(HOME, INTAKING, IDLING).to(OUTTAKING).when(outtakeTrigger);
@@ -127,6 +136,7 @@ public class StateMachineManager {
             stateMachine.switchFromAny(HOME, L1_FRONT, L1_BACK, L2_FRONT, L2_BACK, IDLING)
                     .to(() -> isFront.getAsBoolean() ? CLASSIFIER_FRONT : CLASSIFIER_BACK).when(classifierTrigger);
 
+            // we will always go to HOME when homeTrigger is triggered
             stateMachine.switchFromAny(L1_FRONT, L1_BACK, L2_FRONT, L2_BACK, CLASSIFIER_FRONT, CLASSIFIER_BACK, IDLING)
                     .to(HOME).when(homeTrigger);
 
@@ -233,9 +243,9 @@ public class StateMachineManager {
         return functional;
     }
 
-    public Command tuning() {
-        return superstructure.instantApplyState(SuperstructureStates.TUNING);
-    }
+    public Command tuning() {return superstructure.instantApplyState(SuperstructureStates.TUNING);}
+    public Command ffCharacterization() {return drivetrain.feedforwardCharacterization();}
+    public Command wheelRadiusCharacterization() {return drivetrain.wheelRadiusCharacterization();}
 
     public void logAdditionalData() {
         Telemetry.log("Mechanisms/States/Superstructure", superstructure.getSuperstructureState().name());
